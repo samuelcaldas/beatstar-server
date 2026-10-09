@@ -1,0 +1,19 @@
+# Beatstar Private Server & Reverse Engineering - Documentação
+
+Este diretório contém a documentação técnica, especificações de protocolo (Source of Truth), registros de decisões arquiteturais (ADR) e referências de engenharia reversa do jogo **Beatstar** (Space Ape Games).
+
+---
+
+## Estrutura da Documentação
+
+### 1. Referências Externas (`docs/references/`)
+- [01_beatstar_script_android.md](file:///home/samuelcaldas/repos/beatstar/docs/references/01_beatstar_script_android.md) - Análise do repositório `ExternalAddress4401/Beatstar-Script-Android`: hooking via Frida, `EndPointConfig`, `CintaProvider` e injeção de assets.
+- [02_beatstar_tools.md](file:///home/samuelcaldas/repos/beatstar/docs/references/02_beatstar_tools.md) - Análise do repositório `DavidBuchanan314/beatstar-tools`: enquadramento binário de pacotes do `SocketGateway`, parser Protobuf/Raksha, `userservice` e `cmsservice`.
+
+### 2. Fontes de Verdade (`docs/sot/`)
+- [protocol_specification.md](file:///home/samuelcaldas/repos/beatstar/docs/sot/protocol_specification.md) - Especificação completa do protocolo SpaceApe Sharpla e SocketGateway.
+- [decompilation_guide.md](file:///home/samuelcaldas/repos/beatstar/docs/sot/decompilation_guide.md) - Manual de extração de assets, IL2CPP dump e descompilação C#/Java.
+- [client_patching_guide.md](file:///home/samuelcaldas/repos/beatstar/docs/sot/client_patching_guide.md) - Instruções para patch de APK e injeção de hooks para conexão do cliente ao servidor privado.
+
+### 3. Decisões Arquiteturais (`docs/adr/`)
+- [0001-decompilation-and-server-architecture.md](file:///home/samuelcaldas/repos/beatstar/docs/adr/0001-decompilation-and-server-architecture.md) - Decisão arquitetural de ferramentas de descompilação e stack do servidor privado em Python (FastAPI).

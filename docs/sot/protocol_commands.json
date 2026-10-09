@@ -1,0 +1,2848 @@
+{
+  "AdTotaliserExpired_SharplaAudit": {
+    "name": "AdTotaliserExpired_SharplaAudit",
+    "category": "audit_event",
+    "base_class": "SharplaCmdAudit",
+    "pair_name": "",
+    "fields": []
+  },
+  "AddFriend_Req": {
+    "name": "AddFriend_Req",
+    "category": "request",
+    "base_class": "RakshaItem",
+    "pair_name": "AddFriend_Resp",
+    "fields": [
+      {
+        "name": "clide",
+        "type_name": "string",
+        "is_array": false
+      },
+      {
+        "name": "socialSource",
+        "type_name": "string",
+        "is_array": false
+      }
+    ]
+  },
+  "AddFriend_Resp": {
+    "name": "AddFriend_Resp",
+    "category": "response",
+    "base_class": "RakshaItem",
+    "pair_name": "AddFriend_Req",
+    "fields": [
+      {
+        "name": "result",
+        "type_name": "AddFriendResult",
+        "is_array": false
+      }
+    ]
+  },
+  "AddRooster_SharplaAudit": {
+    "name": "AddRooster_SharplaAudit",
+    "category": "audit_event",
+    "base_class": "SharplaCmdAudit",
+    "pair_name": "",
+    "fields": [
+      {
+        "name": "query",
+        "type_name": "string",
+        "is_array": false
+      },
+      {
+        "name": "openEnded",
+        "type_name": "bool",
+        "is_array": false
+      }
+    ]
+  },
+  "AnswerQuestionnaire_SharplaAudit": {
+    "name": "AnswerQuestionnaire_SharplaAudit",
+    "category": "audit_event",
+    "base_class": "SharplaCmdAudit",
+    "pair_name": "",
+    "fields": [
+      {
+        "name": "questionnaire_id",
+        "type_name": "uint",
+        "is_array": false
+      },
+      {
+        "name": "answers",
+        "type_name": "List<QuestionnaireQuestionAnswer>",
+        "is_array": true
+      }
+    ]
+  },
+  "BatchRequestHeader": {
+    "name": "BatchRequestHeader",
+    "category": "header",
+    "base_class": "RakshaItem",
+    "pair_name": "",
+    "fields": [
+      {
+        "name": "clide",
+        "type_name": "string",
+        "is_array": false
+      },
+      {
+        "name": "lastResponseTimestampMsecs",
+        "type_name": "long",
+        "is_array": false
+      },
+      {
+        "name": "preventProfileWrites",
+        "type_name": "bool",
+        "is_array": false
+      },
+      {
+        "name": "profileVersion",
+        "type_name": "int",
+        "is_array": false
+      }
+    ]
+  },
+  "BatchResponseHeader": {
+    "name": "BatchResponseHeader",
+    "category": "header",
+    "base_class": "RakshaItem",
+    "pair_name": "",
+    "fields": []
+  },
+  "BuyAttemptForLeaderboardEvent_SharplaAudit": {
+    "name": "BuyAttemptForLeaderboardEvent_SharplaAudit",
+    "category": "audit_event",
+    "base_class": "SharplaCmdAudit",
+    "pair_name": "",
+    "fields": [
+      {
+        "name": "game_id",
+        "type_name": "uint",
+        "is_array": false
+      }
+    ]
+  },
+  "BuyLeaderboardEventBundleBox_SharplaAudit": {
+    "name": "BuyLeaderboardEventBundleBox_SharplaAudit",
+    "category": "audit_event",
+    "base_class": "SharplaCmdAudit",
+    "pair_name": "",
+    "fields": [
+      {
+        "name": "eventTemplate_id",
+        "type_name": "uint",
+        "is_array": false
+      },
+      {
+        "name": "optionalIntendedBeatmap_id",
+        "type_name": "uint",
+        "is_array": false
+      }
+    ]
+  },
+  "BuyShopItem_SharplaAudit": {
+    "name": "BuyShopItem_SharplaAudit",
+    "category": "audit_event",
+    "base_class": "SharplaCmdAudit",
+    "pair_name": "",
+    "fields": [
+      {
+        "name": "ToBuy_id",
+        "type_name": "uint",
+        "is_array": false
+      },
+      {
+        "name": "IAPPurchasesProduct",
+        "type_name": "PurchasedProductTO",
+        "is_array": false
+      },
+      {
+        "name": "RewardSource",
+        "type_name": "RewardSource",
+        "is_array": false
+      }
+    ]
+  },
+  "BuyShopThemedBox_SharplaAudit": {
+    "name": "BuyShopThemedBox_SharplaAudit",
+    "category": "audit_event",
+    "base_class": "SharplaCmdAudit",
+    "pair_name": "",
+    "fields": [
+      {
+        "name": "themeBox_id",
+        "type_name": "uint",
+        "is_array": false
+      }
+    ]
+  },
+  "BuySongForLeaderboardEvent_SharplaAudit": {
+    "name": "BuySongForLeaderboardEvent_SharplaAudit",
+    "category": "audit_event",
+    "base_class": "SharplaCmdAudit",
+    "pair_name": "",
+    "fields": [
+      {
+        "name": "beatmap_id",
+        "type_name": "uint",
+        "is_array": false
+      }
+    ]
+  },
+  "BuyTicketForLeaderboardEvent_SharplaAudit": {
+    "name": "BuyTicketForLeaderboardEvent_SharplaAudit",
+    "category": "audit_event",
+    "base_class": "SharplaCmdAudit",
+    "pair_name": "",
+    "fields": [
+      {
+        "name": "game_id",
+        "type_name": "uint",
+        "is_array": false
+      },
+      {
+        "name": "spinCount",
+        "type_name": "int",
+        "is_array": false
+      }
+    ]
+  },
+  "Cheat_SharplaAudit": {
+    "name": "Cheat_SharplaAudit",
+    "category": "audit_event",
+    "base_class": "SharplaCmdAudit",
+    "pair_name": "",
+    "fields": [
+      {
+        "name": "cheat",
+        "type_name": "CheatType",
+        "is_array": false
+      },
+      {
+        "name": "value1",
+        "type_name": "int",
+        "is_array": false
+      },
+      {
+        "name": "string1",
+        "type_name": "string",
+        "is_array": false
+      },
+      {
+        "name": "value2",
+        "type_name": "int",
+        "is_array": false
+      },
+      {
+        "name": "longvalue1",
+        "type_name": "long",
+        "is_array": false
+      },
+      {
+        "name": "dontMarkTransactionsAsSeen",
+        "type_name": "bool",
+        "is_array": false
+      }
+    ]
+  },
+  "ChooseBeatmapOption_SharplaAudit": {
+    "name": "ChooseBeatmapOption_SharplaAudit",
+    "category": "audit_event",
+    "base_class": "SharplaCmdAudit",
+    "pair_name": "",
+    "fields": [
+      {
+        "name": "transactionId",
+        "type_name": "int",
+        "is_array": false
+      },
+      {
+        "name": "beatmapId",
+        "type_name": "uint",
+        "is_array": false
+      }
+    ]
+  },
+  "ClaimAppleMusicSignup_SharplaAudit": {
+    "name": "ClaimAppleMusicSignup_SharplaAudit",
+    "category": "audit_event",
+    "base_class": "SharplaCmdAudit",
+    "pair_name": "",
+    "fields": [
+      {
+        "name": "matchedBeatmaps_id",
+        "type_name": "uint[]",
+        "is_array": true
+      }
+    ]
+  },
+  "ClaimCards_SharplaAudit": {
+    "name": "ClaimCards_SharplaAudit",
+    "category": "audit_event",
+    "base_class": "SharplaCmdAudit",
+    "pair_name": "",
+    "fields": [
+      {
+        "name": "transactionId",
+        "type_name": "int",
+        "is_array": false
+      },
+      {
+        "name": "claimOption",
+        "type_name": "int",
+        "is_array": false
+      },
+      {
+        "name": "caseOption_id",
+        "type_name": "uint",
+        "is_array": false
+      }
+    ]
+  },
+  "ClaimClaimableReward_SharplaRpcReq": {
+    "name": "ClaimClaimableReward_SharplaRpcReq",
+    "category": "request",
+    "base_class": "SharplaRpcRequest",
+    "pair_name": "ClaimClaimableReward_SharplaRpcResp",
+    "fields": []
+  },
+  "ClaimClaimableReward_SharplaRpcResp": {
+    "name": "ClaimClaimableReward_SharplaRpcResp",
+    "category": "response",
+    "base_class": "SharplaRpcResponse",
+    "pair_name": "ClaimClaimableReward_SharplaRpcReq",
+    "fields": [
+      {
+        "name": "rewards",
+        "type_name": "ClaimableReward[]",
+        "is_array": true
+      }
+    ]
+  },
+  "ClaimCosmeticRemovalReward_SharplaAudit": {
+    "name": "ClaimCosmeticRemovalReward_SharplaAudit",
+    "category": "audit_event",
+    "base_class": "SharplaCmdAudit",
+    "pair_name": "",
+    "fields": [
+      {
+        "name": "cosmeticId",
+        "type_name": "uint",
+        "is_array": false
+      },
+      {
+        "name": "cosmeticType",
+        "type_name": "CosmeticType",
+        "is_array": false
+      }
+    ]
+  },
+  "ClaimFreeSongChoicePromo_SharplaAudit": {
+    "name": "ClaimFreeSongChoicePromo_SharplaAudit",
+    "category": "audit_event",
+    "base_class": "SharplaCmdAudit",
+    "pair_name": "",
+    "fields": [
+      {
+        "name": "template_id",
+        "type_name": "uint",
+        "is_array": false
+      },
+      {
+        "name": "beatmapChoice_id",
+        "type_name": "uint",
+        "is_array": false
+      }
+    ]
+  },
+  "ClaimIAP_SharplaAudit": {
+    "name": "ClaimIAP_SharplaAudit",
+    "category": "audit_event",
+    "base_class": "SharplaCmdAudit",
+    "pair_name": "",
+    "fields": [
+      {
+        "name": "IAPTemplate_id",
+        "type_name": "string",
+        "is_array": false
+      },
+      {
+        "name": "PurchasesProduct",
+        "type_name": "PurchasedProductTO",
+        "is_array": false
+      }
+    ]
+  },
+  "ClaimLeaderboardEventReward_SharplaAudit": {
+    "name": "ClaimLeaderboardEventReward_SharplaAudit",
+    "category": "audit_event",
+    "base_class": "SharplaCmdAudit",
+    "pair_name": "",
+    "fields": [
+      {
+        "name": "game_id",
+        "type_name": "uint",
+        "is_array": false
+      }
+    ]
+  },
+  "ClaimReactivationBundle_SharplaAudit": {
+    "name": "ClaimReactivationBundle_SharplaAudit",
+    "category": "audit_event",
+    "base_class": "SharplaCmdAudit",
+    "pair_name": "",
+    "fields": [
+      {
+        "name": "reactivationBundle_id",
+        "type_name": "uint",
+        "is_array": false
+      },
+      {
+        "name": "debugAllow",
+        "type_name": "bool",
+        "is_array": false
+      }
+    ]
+  },
+  "ClaimSongRemovalReward_SharplaAudit": {
+    "name": "ClaimSongRemovalReward_SharplaAudit",
+    "category": "audit_event",
+    "base_class": "SharplaCmdAudit",
+    "pair_name": "",
+    "fields": [
+      {
+        "name": "forBeatmapRemovedId",
+        "type_name": "uint",
+        "is_array": false
+      }
+    ]
+  },
+  "ClaimSongsDisabledReward_SharplaAudit": {
+    "name": "ClaimSongsDisabledReward_SharplaAudit",
+    "category": "audit_event",
+    "base_class": "SharplaCmdAudit",
+    "pair_name": "",
+    "fields": [
+      {
+        "name": "disabledBeatmapIds",
+        "type_name": "List<uint>",
+        "is_array": true
+      }
+    ]
+  },
+  "ClaimStarMilestone_SharplaAudit": {
+    "name": "ClaimStarMilestone_SharplaAudit",
+    "category": "audit_event",
+    "base_class": "SharplaCmdAudit",
+    "pair_name": "",
+    "fields": [
+      {
+        "name": "milestone_id",
+        "type_name": "uint",
+        "is_array": false
+      }
+    ]
+  },
+  "ClaimVideoAdRewardsOnRestart_SharplaAudit": {
+    "name": "ClaimVideoAdRewardsOnRestart_SharplaAudit",
+    "category": "audit_event",
+    "base_class": "SharplaCmdAudit",
+    "pair_name": "",
+    "fields": []
+  },
+  "ClaimableReward": {
+    "name": "ClaimableReward",
+    "category": "data_model",
+    "base_class": "RakshaItem",
+    "pair_name": "",
+    "fields": [
+      {
+        "name": "id",
+        "type_name": "string",
+        "is_array": false
+      },
+      {
+        "name": "message",
+        "type_name": "string",
+        "is_array": false
+      },
+      {
+        "name": "rewards",
+        "type_name": "BaseRewardTemplate[]",
+        "is_array": true
+      },
+      {
+        "name": "source",
+        "type_name": "ClaimableRewardSource",
+        "is_array": false
+      }
+    ]
+  },
+  "ClearIAPPurchase_SharplaAudit": {
+    "name": "ClearIAPPurchase_SharplaAudit",
+    "category": "audit_event",
+    "base_class": "SharplaCmdAudit",
+    "pair_name": "",
+    "fields": [
+      {
+        "name": "iapPurchaseData",
+        "type_name": "IAPPurchaseData",
+        "is_array": false
+      }
+    ]
+  },
+  "ClearShopIAPState_SharplaAudit": {
+    "name": "ClearShopIAPState_SharplaAudit",
+    "category": "audit_event",
+    "base_class": "SharplaCmdAudit",
+    "pair_name": "",
+    "fields": [
+      {
+        "name": "ForShopItem_id",
+        "type_name": "uint",
+        "is_array": false
+      }
+    ]
+  },
+  "CompleteIAPPurchase_SharplaAudit": {
+    "name": "CompleteIAPPurchase_SharplaAudit",
+    "category": "audit_event",
+    "base_class": "SharplaCmdAudit",
+    "pair_name": "",
+    "fields": [
+      {
+        "name": "purchasedProduct",
+        "type_name": "PurchasedProductTO",
+        "is_array": false
+      },
+      {
+        "name": "purchaseData",
+        "type_name": "IAPPurchaseData",
+        "is_array": false
+      }
+    ]
+  },
+  "ContinueRhythmGame_SharplaAudit": {
+    "name": "ContinueRhythmGame_SharplaAudit",
+    "category": "audit_event",
+    "base_class": "SharplaCmdAudit",
+    "pair_name": "",
+    "fields": [
+      {
+        "name": "starIndex",
+        "type_name": "int",
+        "is_array": false
+      },
+      {
+        "name": "retryCount",
+        "type_name": "int",
+        "is_array": false
+      }
+    ]
+  },
+  "ContinueWithWishlistBoxOpen_SharplaAudit": {
+    "name": "ContinueWithWishlistBoxOpen_SharplaAudit",
+    "category": "audit_event",
+    "base_class": "SharplaCmdAudit",
+    "pair_name": "",
+    "fields": [
+      {
+        "name": "likeSongsToOpenWishlistTransactionStep",
+        "type_name": "LikeSongsToOpenWishlistTransactionStepTO",
+        "is_array": false
+      }
+    ]
+  },
+  "DebugOnlyGetPlayerProfile_Req": {
+    "name": "DebugOnlyGetPlayerProfile_Req",
+    "category": "request",
+    "base_class": "RakshaItem",
+    "pair_name": "DebugOnlyGetPlayerProfile_Resp",
+    "fields": [
+      {
+        "name": "clide",
+        "type_name": "string",
+        "is_array": false
+      }
+    ]
+  },
+  "DebugOnlyGetPlayerProfile_Resp": {
+    "name": "DebugOnlyGetPlayerProfile_Resp",
+    "category": "response",
+    "base_class": "RakshaItem",
+    "pair_name": "DebugOnlyGetPlayerProfile_Req",
+    "fields": [
+      {
+        "name": "player",
+        "type_name": "MyProfileTO",
+        "is_array": false
+      },
+      {
+        "name": "regularLeaderboardPercentile",
+        "type_name": "int",
+        "is_array": false
+      },
+      {
+        "name": "deluxeLeaderboardPercentile",
+        "type_name": "int",
+        "is_array": false
+      }
+    ]
+  },
+  "DeluxeInteractionScoringAnalytics": {
+    "name": "DeluxeInteractionScoringAnalytics",
+    "category": "data_model",
+    "base_class": "RakshaItem",
+    "pair_name": "",
+    "fields": [
+      {
+        "name": "diagonalSwipesScore",
+        "type_name": "int",
+        "is_array": false
+      },
+      {
+        "name": "diagonalSwipesPossibleScore",
+        "type_name": "int",
+        "is_array": false
+      },
+      {
+        "name": "switchHoldsStartScore",
+        "type_name": "int",
+        "is_array": false
+      },
+      {
+        "name": "switchHoldsPossibleStartScore",
+        "type_name": "int",
+        "is_array": false
+      },
+      {
+        "name": "switchHoldsIntermediateBeatsScore",
+        "type_name": "int",
+        "is_array": false
+      },
+      {
+        "name": "switchHoldsPossibleIntermediateBeatsScore",
+        "type_name": "int",
+        "is_array": false
+      },
+      {
+        "name": "switchHoldSwipesFlickScore",
+        "type_name": "int",
+        "is_array": false
+      },
+      {
+        "name": "switchHoldSwipesPossibleFlickScore",
+        "type_name": "int",
+        "is_array": false
+      }
+    ]
+  },
+  "EmptyReq": {
+    "name": "EmptyReq",
+    "category": "data_model",
+    "base_class": "RakshaItem",
+    "pair_name": "",
+    "fields": []
+  },
+  "EmptyResp": {
+    "name": "EmptyResp",
+    "category": "data_model",
+    "base_class": "RakshaItem",
+    "pair_name": "",
+    "fields": []
+  },
+  "EndAdWatch_SharplaAudit": {
+    "name": "EndAdWatch_SharplaAudit",
+    "category": "audit_event",
+    "base_class": "SharplaCmdAudit",
+    "pair_name": "",
+    "fields": [
+      {
+        "name": "adWasRewarded",
+        "type_name": "bool",
+        "is_array": false
+      }
+    ]
+  },
+  "EndShowdown_SharplaRpcReq": {
+    "name": "EndShowdown_SharplaRpcReq",
+    "category": "request",
+    "base_class": "SharplaRpcRequest",
+    "pair_name": "EndShowdown_SharplaRpcResp",
+    "fields": [
+      {
+        "name": "game_id",
+        "type_name": "uint",
+        "is_array": false
+      }
+    ]
+  },
+  "EndShowdown_SharplaRpcResp": {
+    "name": "EndShowdown_SharplaRpcResp",
+    "category": "response",
+    "base_class": "SharplaRpcResponse",
+    "pair_name": "EndShowdown_SharplaRpcReq",
+    "fields": [
+      {
+        "name": "playerPosition",
+        "type_name": "int",
+        "is_array": false
+      },
+      {
+        "name": "showdownTO",
+        "type_name": "ShowdownTO",
+        "is_array": false
+      }
+    ]
+  },
+  "ExpireBonusCardsSystem_SharplaAudit": {
+    "name": "ExpireBonusCardsSystem_SharplaAudit",
+    "category": "audit_event",
+    "base_class": "SharplaCmdAudit",
+    "pair_name": "",
+    "fields": [
+      {
+        "name": "skipped",
+        "type_name": "bool",
+        "is_array": false
+      }
+    ]
+  },
+  "FriendBragReceived_SharplaAudit": {
+    "name": "FriendBragReceived_SharplaAudit",
+    "category": "audit_event",
+    "base_class": "SharplaCmdAudit",
+    "pair_name": "",
+    "fields": [
+      {
+        "name": "Brag",
+        "type_name": "Nudge_Notification",
+        "is_array": false
+      }
+    ]
+  },
+  "FriendBragSent_SharplaAudit": {
+    "name": "FriendBragSent_SharplaAudit",
+    "category": "audit_event",
+    "base_class": "SharplaCmdAudit",
+    "pair_name": "",
+    "fields": [
+      {
+        "name": "targetPlayerId",
+        "type_name": "string",
+        "is_array": false
+      },
+      {
+        "name": "beatmap_id",
+        "type_name": "uint",
+        "is_array": false
+      }
+    ]
+  },
+  "FriendLeaderboardSynced_SharplaAudit": {
+    "name": "FriendLeaderboardSynced_SharplaAudit",
+    "category": "audit_event",
+    "base_class": "SharplaCmdAudit",
+    "pair_name": "",
+    "fields": [
+      {
+        "name": "beatmap_id",
+        "type_name": "uint",
+        "is_array": false
+      },
+      {
+        "name": "entries",
+        "type_name": "ClideAndScoreTO[]",
+        "is_array": true
+      }
+    ]
+  },
+  "FriendViews_Req": {
+    "name": "FriendViews_Req",
+    "category": "request",
+    "base_class": "RakshaItem",
+    "pair_name": "FriendViews_Resp",
+    "fields": [
+      {
+        "name": "clides",
+        "type_name": "string[]",
+        "is_array": true
+      }
+    ]
+  },
+  "FriendViews_Resp": {
+    "name": "FriendViews_Resp",
+    "category": "response",
+    "base_class": "RakshaItem",
+    "pair_name": "FriendViews_Req",
+    "fields": [
+      {
+        "name": "views",
+        "type_name": "PlayerTO[]",
+        "is_array": true
+      },
+      {
+        "name": "invalidClides",
+        "type_name": "string[]",
+        "is_array": true
+      }
+    ]
+  },
+  "Friends_Req": {
+    "name": "Friends_Req",
+    "category": "request",
+    "base_class": "RakshaItem",
+    "pair_name": "Friends_Resp",
+    "fields": []
+  },
+  "Friends_Resp": {
+    "name": "Friends_Resp",
+    "category": "response",
+    "base_class": "RakshaItem",
+    "pair_name": "Friends_Req",
+    "fields": [
+      {
+        "name": "friends",
+        "type_name": "string[]",
+        "is_array": true
+      },
+      {
+        "name": "incomingFriends",
+        "type_name": "string[]",
+        "is_array": true
+      },
+      {
+        "name": "desiredFriends",
+        "type_name": "string[]",
+        "is_array": true
+      },
+      {
+        "name": "errorCode",
+        "type_name": "uint",
+        "is_array": false
+      }
+    ]
+  },
+  "GenerateBonusCardsRewardInProgress_SharplaAudit": {
+    "name": "GenerateBonusCardsRewardInProgress_SharplaAudit",
+    "category": "audit_event",
+    "base_class": "SharplaCmdAudit",
+    "pair_name": "",
+    "fields": []
+  },
+  "GetCurrentUserProfile_Req": {
+    "name": "GetCurrentUserProfile_Req",
+    "category": "request",
+    "base_class": "RakshaItem",
+    "pair_name": "GetCurrentUserProfile_Resp",
+    "fields": []
+  },
+  "GetCurrentUserProfile_Resp": {
+    "name": "GetCurrentUserProfile_Resp",
+    "category": "response",
+    "base_class": "RakshaItem",
+    "pair_name": "GetCurrentUserProfile_Req",
+    "fields": [
+      {
+        "name": "profile",
+        "type_name": "MyProfileTO",
+        "is_array": false
+      }
+    ]
+  },
+  "GetGooglePlayGroupingPersona_Req": {
+    "name": "GetGooglePlayGroupingPersona_Req",
+    "category": "request",
+    "base_class": "RakshaItem",
+    "pair_name": "GetGooglePlayGroupingPersona_Resp",
+    "fields": []
+  },
+  "GetGooglePlayGroupingPersona_Resp": {
+    "name": "GetGooglePlayGroupingPersona_Resp",
+    "category": "response",
+    "base_class": "RakshaItem",
+    "pair_name": "GetGooglePlayGroupingPersona_Req",
+    "fields": [
+      {
+        "name": "persona",
+        "type_name": "string",
+        "is_array": false
+      }
+    ]
+  },
+  "GetMusicKitAuthentication_Req": {
+    "name": "GetMusicKitAuthentication_Req",
+    "category": "request",
+    "base_class": "RakshaItem",
+    "pair_name": "GetMusicKitAuthentication_Resp",
+    "fields": []
+  },
+  "GetMusicKitAuthentication_Resp": {
+    "name": "GetMusicKitAuthentication_Resp",
+    "category": "response",
+    "base_class": "RakshaItem",
+    "pair_name": "GetMusicKitAuthentication_Req",
+    "fields": [
+      {
+        "name": "token",
+        "type_name": "string",
+        "is_array": false
+      },
+      {
+        "name": "dateMsecs",
+        "type_name": "long",
+        "is_array": false
+      }
+    ]
+  },
+  "GetMusicKitDeveloperToken_Req": {
+    "name": "GetMusicKitDeveloperToken_Req",
+    "category": "request",
+    "base_class": "RakshaItem",
+    "pair_name": "GetMusicKitDeveloperToken_Resp",
+    "fields": [
+      {
+        "name": "bundleId",
+        "type_name": "string",
+        "is_array": false
+      }
+    ]
+  },
+  "GetMusicKitDeveloperToken_Resp": {
+    "name": "GetMusicKitDeveloperToken_Resp",
+    "category": "response",
+    "base_class": "RakshaItem",
+    "pair_name": "GetMusicKitDeveloperToken_Req",
+    "fields": [
+      {
+        "name": "developerToken",
+        "type_name": "string",
+        "is_array": false
+      },
+      {
+        "name": "expiryMsecs",
+        "type_name": "long",
+        "is_array": false
+      }
+    ]
+  },
+  "GetNameUidLegacy_Req": {
+    "name": "GetNameUidLegacy_Req",
+    "category": "request",
+    "base_class": "RakshaItem",
+    "pair_name": "GetNameUidLegacy_Resp",
+    "fields": []
+  },
+  "GetNameUidLegacy_Resp": {
+    "name": "GetNameUidLegacy_Resp",
+    "category": "response",
+    "base_class": "RakshaItem",
+    "pair_name": "GetNameUidLegacy_Req",
+    "fields": [
+      {
+        "name": "nameUid",
+        "type_name": "int",
+        "is_array": false
+      }
+    ]
+  },
+  "GetNameUid_Req": {
+    "name": "GetNameUid_Req",
+    "category": "request",
+    "base_class": "RakshaItem",
+    "pair_name": "GetNameUid_Resp",
+    "fields": []
+  },
+  "GetNameUid_Resp": {
+    "name": "GetNameUid_Resp",
+    "category": "response",
+    "base_class": "RakshaItem",
+    "pair_name": "GetNameUid_Req",
+    "fields": [
+      {
+        "name": "nameUid",
+        "type_name": "int",
+        "is_array": false
+      }
+    ]
+  },
+  "GetPublicProfile_SharplaRpcReq": {
+    "name": "GetPublicProfile_SharplaRpcReq",
+    "category": "request",
+    "base_class": "SharplaRpcRequest",
+    "pair_name": "GetPublicProfile_SharplaRpcResp",
+    "fields": [
+      {
+        "name": "clide",
+        "type_name": "string",
+        "is_array": false
+      }
+    ]
+  },
+  "GetPublicProfile_SharplaRpcResp": {
+    "name": "GetPublicProfile_SharplaRpcResp",
+    "category": "response",
+    "base_class": "SharplaRpcResponse",
+    "pair_name": "GetPublicProfile_SharplaRpcReq",
+    "fields": [
+      {
+        "name": "profile",
+        "type_name": "MyProfileTO",
+        "is_array": false
+      },
+      {
+        "name": "leaderboardInfo",
+        "type_name": "PlayerLeaderboardInfoTO",
+        "is_array": false
+      },
+      {
+        "name": "deluxeLeaderboardInfo",
+        "type_name": "PlayerLeaderboardInfoTO",
+        "is_array": false
+      }
+    ]
+  },
+  "HideBrag_SharplaAudit": {
+    "name": "HideBrag_SharplaAudit",
+    "category": "audit_event",
+    "base_class": "SharplaCmdAudit",
+    "pair_name": "",
+    "fields": [
+      {
+        "name": "bragId",
+        "type_name": "string",
+        "is_array": false
+      }
+    ]
+  },
+  "InteractionTypeAndCountsPerStreakMultiplier": {
+    "name": "InteractionTypeAndCountsPerStreakMultiplier",
+    "category": "data_model",
+    "base_class": "RakshaItem",
+    "pair_name": "",
+    "fields": [
+      {
+        "name": "InteractionType",
+        "type_name": "GameInteractionType",
+        "is_array": false
+      },
+      {
+        "name": "CountsPerStreakMultiplier",
+        "type_name": "int[]",
+        "is_array": true
+      },
+      {
+        "name": "ScoreTypeCounts",
+        "type_name": "ScoreTypeAndCount[]",
+        "is_array": true
+      },
+      {
+        "name": "NumOfLateOkScoreTypes",
+        "type_name": "int",
+        "is_array": false
+      }
+    ]
+  },
+  "JoinShowdown_SharplaRpcReq": {
+    "name": "JoinShowdown_SharplaRpcReq",
+    "category": "request",
+    "base_class": "SharplaRpcRequest",
+    "pair_name": "JoinShowdown_SharplaRpcResp",
+    "fields": [
+      {
+        "name": "game_id",
+        "type_name": "uint",
+        "is_array": false
+      },
+      {
+        "name": "beatmap_id",
+        "type_name": "uint",
+        "is_array": false
+      }
+    ]
+  },
+  "JoinShowdown_SharplaRpcResp": {
+    "name": "JoinShowdown_SharplaRpcResp",
+    "category": "response",
+    "base_class": "SharplaRpcResponse",
+    "pair_name": "JoinShowdown_SharplaRpcReq",
+    "fields": [
+      {
+        "name": "data",
+        "type_name": "ShowdownTO",
+        "is_array": false
+      },
+      {
+        "name": "beatmaps_id",
+        "type_name": "uint[]",
+        "is_array": true
+      }
+    ]
+  },
+  "LeaderboardWithViews_Req": {
+    "name": "LeaderboardWithViews_Req",
+    "category": "request",
+    "base_class": "RakshaItem",
+    "pair_name": "LeaderboardWithViews_Resp",
+    "fields": [
+      {
+        "name": "leaderboardName",
+        "type_name": "string",
+        "is_array": false
+      },
+      {
+        "name": "friendsOnly",
+        "type_name": "bool",
+        "is_array": false
+      },
+      {
+        "name": "startIndex",
+        "type_name": "long",
+        "is_array": false
+      },
+      {
+        "name": "count",
+        "type_name": "int",
+        "is_array": false
+      },
+      {
+        "name": "supercellIdFriendClides",
+        "type_name": "string[]",
+        "is_array": true
+      }
+    ]
+  },
+  "LeaderboardWithViews_Resp": {
+    "name": "LeaderboardWithViews_Resp",
+    "category": "response",
+    "base_class": "RakshaItem",
+    "pair_name": "LeaderboardWithViews_Req",
+    "fields": [
+      {
+        "name": "results",
+        "type_name": "PlayerAndScoreTO[]",
+        "is_array": true
+      },
+      {
+        "name": "isError",
+        "type_name": "bool",
+        "is_array": false
+      },
+      {
+        "name": "playerLeaderboardInfo",
+        "type_name": "PlayerLeaderboardInfoTO",
+        "is_array": false
+      },
+      {
+        "name": "nextIndex",
+        "type_name": "int",
+        "is_array": false
+      }
+    ]
+  },
+  "Leaderboard_Req": {
+    "name": "Leaderboard_Req",
+    "category": "request",
+    "base_class": "RakshaItem",
+    "pair_name": "Leaderboard_Resp",
+    "fields": [
+      {
+        "name": "leaderboardName",
+        "type_name": "string",
+        "is_array": false
+      },
+      {
+        "name": "friendsOnly",
+        "type_name": "bool",
+        "is_array": false
+      },
+      {
+        "name": "startIndex",
+        "type_name": "long",
+        "is_array": false
+      },
+      {
+        "name": "count",
+        "type_name": "int",
+        "is_array": false
+      },
+      {
+        "name": "supercellIdFriendClides",
+        "type_name": "string[]",
+        "is_array": true
+      }
+    ]
+  },
+  "Leaderboard_Resp": {
+    "name": "Leaderboard_Resp",
+    "category": "response",
+    "base_class": "RakshaItem",
+    "pair_name": "Leaderboard_Req",
+    "fields": [
+      {
+        "name": "results",
+        "type_name": "ClideAndScoreTO[]",
+        "is_array": true
+      },
+      {
+        "name": "isError",
+        "type_name": "bool",
+        "is_array": false
+      },
+      {
+        "name": "playerLeaderboardInfo",
+        "type_name": "PlayerLeaderboardInfoTO",
+        "is_array": false
+      }
+    ]
+  },
+  "LiveOpsDeeplinkClaimLink_SharplaAudit": {
+    "name": "LiveOpsDeeplinkClaimLink_SharplaAudit",
+    "category": "audit_event",
+    "base_class": "SharplaCmdAudit",
+    "pair_name": "",
+    "fields": [
+      {
+        "name": "liveOpsDeeplinkReward",
+        "type_name": "LiveOpsDeeplinkRewardTemplate",
+        "is_array": false
+      },
+      {
+        "name": "campaignIdForAnalytics",
+        "type_name": "string",
+        "is_array": false
+      }
+    ]
+  },
+  "LiveOpsDeeplinkCollectRewards_SharplaAudit": {
+    "name": "LiveOpsDeeplinkCollectRewards_SharplaAudit",
+    "category": "audit_event",
+    "base_class": "SharplaCmdAudit",
+    "pair_name": "",
+    "fields": [
+      {
+        "name": "liveOpsDeeplinkReward",
+        "type_name": "LiveOpsDeeplinkRewardTemplate",
+        "is_array": false
+      }
+    ]
+  },
+  "LiveOpsEvent_End_SharplaAudit": {
+    "name": "LiveOpsEvent_End_SharplaAudit",
+    "category": "audit_event",
+    "base_class": "SharplaCmdAudit",
+    "pair_name": "",
+    "fields": [
+      {
+        "name": "eventToEnd_id",
+        "type_name": "uint",
+        "is_array": false
+      }
+    ]
+  },
+  "LiveOpsEvent_Start_SharplaAudit": {
+    "name": "LiveOpsEvent_Start_SharplaAudit",
+    "category": "audit_event",
+    "base_class": "SharplaCmdAudit",
+    "pair_name": "",
+    "fields": [
+      {
+        "name": "eventToStart_id",
+        "type_name": "uint",
+        "is_array": false
+      }
+    ]
+  },
+  "LiveOpsTotaliserEvent_BoostSongPoints_SharplaAudit": {
+    "name": "LiveOpsTotaliserEvent_BoostSongPoints_SharplaAudit",
+    "category": "audit_event",
+    "base_class": "SharplaCmdAudit",
+    "pair_name": "",
+    "fields": [
+      {
+        "name": "game_id",
+        "type_name": "uint",
+        "is_array": false
+      },
+      {
+        "name": "beatmap_id",
+        "type_name": "uint",
+        "is_array": false
+      }
+    ]
+  },
+  "LiveOpsTotaliserEvent_ClaimTotaliserReward_SharplaAudit": {
+    "name": "LiveOpsTotaliserEvent_ClaimTotaliserReward_SharplaAudit",
+    "category": "audit_event",
+    "base_class": "SharplaCmdAudit",
+    "pair_name": "",
+    "fields": [
+      {
+        "name": "game_id",
+        "type_name": "uint",
+        "is_array": false
+      },
+      {
+        "name": "rewardIndex",
+        "type_name": "int",
+        "is_array": false
+      }
+    ]
+  },
+  "LiveOpsTotaliserEvent_RefreshBeatmaps_SharplaAudit": {
+    "name": "LiveOpsTotaliserEvent_RefreshBeatmaps_SharplaAudit",
+    "category": "audit_event",
+    "base_class": "SharplaCmdAudit",
+    "pair_name": "",
+    "fields": [
+      {
+        "name": "game_id",
+        "type_name": "uint",
+        "is_array": false
+      }
+    ]
+  },
+  "LiveOpsTotaliserEvent_SetTrackSkinForGenre_SharplaAudit": {
+    "name": "LiveOpsTotaliserEvent_SetTrackSkinForGenre_SharplaAudit",
+    "category": "audit_event",
+    "base_class": "SharplaCmdAudit",
+    "pair_name": "",
+    "fields": [
+      {
+        "name": "genre_id",
+        "type_name": "uint",
+        "is_array": false
+      },
+      {
+        "name": "trackSkin_id",
+        "type_name": "uint",
+        "is_array": false
+      }
+    ]
+  },
+  "LiveOpsTotaliserEvent_SwapBeatmap_SharplaAudit": {
+    "name": "LiveOpsTotaliserEvent_SwapBeatmap_SharplaAudit",
+    "category": "audit_event",
+    "base_class": "SharplaCmdAudit",
+    "pair_name": "",
+    "fields": [
+      {
+        "name": "game_id",
+        "type_name": "uint",
+        "is_array": false
+      },
+      {
+        "name": "beatmap_id",
+        "type_name": "uint",
+        "is_array": false
+      }
+    ]
+  },
+  "LogicRpcs": {
+    "name": "LogicRpcs",
+    "category": "data_model",
+    "base_class": "RakshaDatabase",
+    "pair_name": "",
+    "fields": [
+      {
+        "name": "version",
+        "type_name": "string",
+        "is_array": false
+      }
+    ]
+  },
+  "MakeGameCurrencyPurchase_SharplaAudit": {
+    "name": "MakeGameCurrencyPurchase_SharplaAudit",
+    "category": "audit_event",
+    "base_class": "SharplaCmdAudit",
+    "pair_name": "",
+    "fields": [
+      {
+        "name": "purchaseData",
+        "type_name": "GameCurrencyPurchaseData",
+        "is_array": false
+      }
+    ]
+  },
+  "MarkSeenDatedRooster_SharplaAudit": {
+    "name": "MarkSeenDatedRooster_SharplaAudit",
+    "category": "audit_event",
+    "base_class": "SharplaCmdAudit",
+    "pair_name": "",
+    "fields": [
+      {
+        "name": "key",
+        "type_name": "int",
+        "is_array": false
+      },
+      {
+        "name": "dateMsecs",
+        "type_name": "long",
+        "is_array": false
+      }
+    ]
+  },
+  "MarkSeenRooster_SharplaAudit": {
+    "name": "MarkSeenRooster_SharplaAudit",
+    "category": "audit_event",
+    "base_class": "SharplaCmdAudit",
+    "pair_name": "",
+    "fields": [
+      {
+        "name": "query",
+        "type_name": "string",
+        "is_array": false
+      },
+      {
+        "name": "openEnded",
+        "type_name": "bool",
+        "is_array": false
+      },
+      {
+        "name": "queries",
+        "type_name": "string[]",
+        "is_array": true
+      }
+    ]
+  },
+  "MarkSeenStringDatedRooster_SharplaAudit": {
+    "name": "MarkSeenStringDatedRooster_SharplaAudit",
+    "category": "audit_event",
+    "base_class": "SharplaCmdAudit",
+    "pair_name": "",
+    "fields": [
+      {
+        "name": "key",
+        "type_name": "string",
+        "is_array": false
+      },
+      {
+        "name": "dateMsecs",
+        "type_name": "long",
+        "is_array": false
+      }
+    ]
+  },
+  "MarkTransactionSeen_SharplaAudit": {
+    "name": "MarkTransactionSeen_SharplaAudit",
+    "category": "audit_event",
+    "base_class": "SharplaCmdAudit",
+    "pair_name": "",
+    "fields": [
+      {
+        "name": "uid",
+        "type_name": "int",
+        "is_array": false
+      }
+    ]
+  },
+  "MarkTransactionStepSeen_SharplaAudit": {
+    "name": "MarkTransactionStepSeen_SharplaAudit",
+    "category": "audit_event",
+    "base_class": "SharplaCmdAudit",
+    "pair_name": "",
+    "fields": [
+      {
+        "name": "uids",
+        "type_name": "List<int>",
+        "is_array": true
+      }
+    ]
+  },
+  "ModifyFtueCounter_SharplaAudit": {
+    "name": "ModifyFtueCounter_SharplaAudit",
+    "category": "audit_event",
+    "base_class": "SharplaCmdAudit",
+    "pair_name": "",
+    "fields": [
+      {
+        "name": "counter_id",
+        "type_name": "uint",
+        "is_array": false
+      },
+      {
+        "name": "changeDelta",
+        "type_name": "int",
+        "is_array": false
+      },
+      {
+        "name": "resetToZero",
+        "type_name": "bool",
+        "is_array": false
+      },
+      {
+        "name": "resetToZeroAndApplyDelta",
+        "type_name": "bool",
+        "is_array": false
+      }
+    ]
+  },
+  "Nudge_Req": {
+    "name": "Nudge_Req",
+    "category": "request",
+    "base_class": "RakshaItem",
+    "pair_name": "Nudge_Resp",
+    "fields": [
+      {
+        "name": "clide",
+        "type_name": "string",
+        "is_array": false
+      },
+      {
+        "name": "beatmap_id",
+        "type_name": "uint",
+        "is_array": false
+      },
+      {
+        "name": "emoji_id",
+        "type_name": "uint",
+        "is_array": false
+      },
+      {
+        "name": "score",
+        "type_name": "BeatmapScore",
+        "is_array": false
+      },
+      {
+        "name": "beatmapVersion",
+        "type_name": "int",
+        "is_array": false
+      }
+    ]
+  },
+  "Nudge_Resp": {
+    "name": "Nudge_Resp",
+    "category": "response",
+    "base_class": "RakshaItem",
+    "pair_name": "Nudge_Req",
+    "fields": [
+      {
+        "name": "id",
+        "type_name": "string",
+        "is_array": false
+      }
+    ]
+  },
+  "OfferAd_SharplaAudit": {
+    "name": "OfferAd_SharplaAudit",
+    "category": "audit_event",
+    "base_class": "SharplaCmdAudit",
+    "pair_name": "",
+    "fields": []
+  },
+  "OpenBonusCardsRewardGachaBox_SharplaAudit": {
+    "name": "OpenBonusCardsRewardGachaBox_SharplaAudit",
+    "category": "audit_event",
+    "base_class": "SharplaCmdAudit",
+    "pair_name": "",
+    "fields": [
+      {
+        "name": "ChoiceIndex",
+        "type_name": "int",
+        "is_array": false
+      }
+    ]
+  },
+  "OpenCampaignGachaBox_SharplaAudit": {
+    "name": "OpenCampaignGachaBox_SharplaAudit",
+    "category": "audit_event",
+    "base_class": "SharplaCmdAudit",
+    "pair_name": "",
+    "fields": [
+      {
+        "name": "slotTemplate_id",
+        "type_name": "uint",
+        "is_array": false
+      }
+    ]
+  },
+  "PayToForceOpenCampaignGachaBox_SharplaAudit": {
+    "name": "PayToForceOpenCampaignGachaBox_SharplaAudit",
+    "category": "audit_event",
+    "base_class": "SharplaCmdAudit",
+    "pair_name": "",
+    "fields": [
+      {
+        "name": "slotTemplate_id",
+        "type_name": "uint",
+        "is_array": false
+      }
+    ]
+  },
+  "PurchasingRefreshAfterAlloc_SharplaAudit": {
+    "name": "PurchasingRefreshAfterAlloc_SharplaAudit",
+    "category": "audit_event",
+    "base_class": "SharplaCmdAudit",
+    "pair_name": "",
+    "fields": []
+  },
+  "QuestionnaireQuestionAnswer": {
+    "name": "QuestionnaireQuestionAnswer",
+    "category": "data_model",
+    "base_class": "RakshaItem",
+    "pair_name": "",
+    "fields": [
+      {
+        "name": "question_id",
+        "type_name": "uint",
+        "is_array": false
+      },
+      {
+        "name": "answerIndexes",
+        "type_name": "List<int>",
+        "is_array": true
+      }
+    ]
+  },
+  "RefreshBonusCardsSystem_SharplaAudit": {
+    "name": "RefreshBonusCardsSystem_SharplaAudit",
+    "category": "audit_event",
+    "base_class": "SharplaCmdAudit",
+    "pair_name": "",
+    "fields": []
+  },
+  "RemoveFriend_Req": {
+    "name": "RemoveFriend_Req",
+    "category": "request",
+    "base_class": "RakshaItem",
+    "pair_name": "RemoveFriend_Resp",
+    "fields": [
+      {
+        "name": "clide",
+        "type_name": "string",
+        "is_array": false
+      },
+      {
+        "name": "socialSource",
+        "type_name": "string",
+        "is_array": false
+      }
+    ]
+  },
+  "RemoveFriend_Resp": {
+    "name": "RemoveFriend_Resp",
+    "category": "response",
+    "base_class": "RakshaItem",
+    "pair_name": "RemoveFriend_Req",
+    "fields": []
+  },
+  "RemoveSeenStringDatedRooster_SharplaAudit": {
+    "name": "RemoveSeenStringDatedRooster_SharplaAudit",
+    "category": "audit_event",
+    "base_class": "SharplaCmdAudit",
+    "pair_name": "",
+    "fields": [
+      {
+        "name": "query",
+        "type_name": "string",
+        "is_array": false
+      },
+      {
+        "name": "openEnded",
+        "type_name": "bool",
+        "is_array": false
+      },
+      {
+        "name": "queries",
+        "type_name": "string[]",
+        "is_array": true
+      }
+    ]
+  },
+  "RenamePlayerName_SharplaRpcReq": {
+    "name": "RenamePlayerName_SharplaRpcReq",
+    "category": "request",
+    "base_class": "SharplaRpcRequest",
+    "pair_name": "RenamePlayerName_SharplaRpcResp",
+    "fields": [
+      {
+        "name": "name",
+        "type_name": "string",
+        "is_array": false
+      }
+    ]
+  },
+  "RenamePlayerName_SharplaRpcResp": {
+    "name": "RenamePlayerName_SharplaRpcResp",
+    "category": "response",
+    "base_class": "SharplaRpcResponse",
+    "pair_name": "RenamePlayerName_SharplaRpcReq",
+    "fields": [
+      {
+        "name": "allowed",
+        "type_name": "bool",
+        "is_array": false
+      }
+    ]
+  },
+  "RequestHeader": {
+    "name": "RequestHeader",
+    "category": "header",
+    "base_class": "RakshaItem",
+    "pair_name": "",
+    "fields": []
+  },
+  "ResponseHeader": {
+    "name": "ResponseHeader",
+    "category": "header",
+    "base_class": "RakshaItem",
+    "pair_name": "",
+    "fields": []
+  },
+  "RhythmGameEnded_SharplaAudit": {
+    "name": "RhythmGameEnded_SharplaAudit",
+    "category": "audit_event",
+    "base_class": "SharplaCmdAudit",
+    "pair_name": "",
+    "fields": [
+      {
+        "name": "song_id",
+        "type_name": "uint",
+        "is_array": false
+      },
+      {
+        "name": "maxStreak",
+        "type_name": "int",
+        "is_array": false
+      },
+      {
+        "name": "numContinues",
+        "type_name": "int",
+        "is_array": false
+      },
+      {
+        "name": "scoreTypeCounts",
+        "type_name": "ScoreTypeAndCount[]",
+        "is_array": true
+      },
+      {
+        "name": "checkpointReached",
+        "type_name": "int",
+        "is_array": false
+      },
+      {
+        "name": "resultType",
+        "type_name": "SongResultType",
+        "is_array": false
+      },
+      {
+        "name": "interactionTypeAndCountPerStreakMultiplier",
+        "type_name": "InteractionTypeAndCountsPerStreakMultiplier[]",
+        "is_array": true
+      },
+      {
+        "name": "maxStreakMultiplier",
+        "type_name": "float",
+        "is_array": false
+      },
+      {
+        "name": "previousBeatmapLeaderboardRank",
+        "type_name": "int",
+        "is_array": false
+      },
+      {
+        "name": "currentBeatmapLeaderboardRank",
+        "type_name": "int",
+        "is_array": false
+      },
+      {
+        "name": "score",
+        "type_name": "BeatmapScore",
+        "is_array": false
+      },
+      {
+        "name": "numOfLateOkScoreTypes",
+        "type_name": "int",
+        "is_array": false
+      },
+      {
+        "name": "currentBeatmapLeaderboardNumEntries",
+        "type_name": "int",
+        "is_array": false
+      },
+      {
+        "name": "numOfTooEarlyScores",
+        "type_name": "int",
+        "is_array": false
+      },
+      {
+        "name": "numOfMissTaps",
+        "type_name": "int",
+        "is_array": false
+      },
+      {
+        "name": "showdownSongRank",
+        "type_name": "int",
+        "is_array": false
+      },
+      {
+        "name": "showdownOverallRank",
+        "type_name": "int",
+        "is_array": false
+      },
+      {
+        "name": "videoAdSystemActive",
+        "type_name": "bool",
+        "is_array": false
+      },
+      {
+        "name": "touchBugAnalyticsData",
+        "type_name": "TouchBugsAnalyticsData",
+        "is_array": false
+      },
+      {
+        "name": "associatedLiveOpsEvent_id",
+        "type_name": "uint",
+        "is_array": false
+      },
+      {
+        "name": "deluxeInteractionScores",
+        "type_name": "DeluxeInteractionScoringAnalytics",
+        "is_array": false
+      },
+      {
+        "name": "eventPoints",
+        "type_name": "int",
+        "is_array": false
+      }
+    ]
+  },
+  "RhythmGameIntro_SharplaAudit": {
+    "name": "RhythmGameIntro_SharplaAudit",
+    "category": "audit_event",
+    "base_class": "SharplaCmdAudit",
+    "pair_name": "",
+    "fields": [
+      {
+        "name": "song_id",
+        "type_name": "uint",
+        "is_array": false
+      }
+    ]
+  },
+  "RhythmGameStarted_SharplaAudit": {
+    "name": "RhythmGameStarted_SharplaAudit",
+    "category": "audit_event",
+    "base_class": "SharplaCmdAudit",
+    "pair_name": "",
+    "fields": [
+      {
+        "name": "song_id",
+        "type_name": "uint",
+        "is_array": false
+      },
+      {
+        "name": "uniqueId",
+        "type_name": "string",
+        "is_array": false
+      },
+      {
+        "name": "audioOutputType",
+        "type_name": "AudioOutputType",
+        "is_array": false
+      },
+      {
+        "name": "audioVolume",
+        "type_name": "float",
+        "is_array": false
+      },
+      {
+        "name": "vibration",
+        "type_name": "bool",
+        "is_array": false
+      },
+      {
+        "name": "calibrationOffset",
+        "type_name": "float",
+        "is_array": false
+      },
+      {
+        "name": "numFriends",
+        "type_name": "int",
+        "is_array": false
+      },
+      {
+        "name": "currentBeatmapLeaderboardRank",
+        "type_name": "int",
+        "is_array": false
+      },
+      {
+        "name": "currentBeatmapLeaderboardNumEntries",
+        "type_name": "int",
+        "is_array": false
+      },
+      {
+        "name": "bluetoothOutputName",
+        "type_name": "string",
+        "is_array": false
+      },
+      {
+        "name": "currentOverallLeaderboardScore",
+        "type_name": "int",
+        "is_array": false
+      },
+      {
+        "name": "associatedLiveOpsEvent_id",
+        "type_name": "uint",
+        "is_array": false
+      },
+      {
+        "name": "songSelectSource",
+        "type_name": "SongSelectSourceType",
+        "is_array": false
+      },
+      {
+        "name": "songSelectShuffleForwardCount",
+        "type_name": "int",
+        "is_array": false
+      },
+      {
+        "name": "songSelectShuffleBackwardCount",
+        "type_name": "int",
+        "is_array": false
+      }
+    ]
+  },
+  "ScoreInShowdown_Req": {
+    "name": "ScoreInShowdown_Req",
+    "category": "request",
+    "base_class": "RakshaItem",
+    "pair_name": "ScoreInShowdown_Resp",
+    "fields": [
+      {
+        "name": "score",
+        "type_name": "int",
+        "is_array": false
+      },
+      {
+        "name": "roomId",
+        "type_name": "string",
+        "is_array": false
+      },
+      {
+        "name": "beatmap_id",
+        "type_name": "uint",
+        "is_array": false
+      }
+    ]
+  },
+  "ScoreInShowdown_Resp": {
+    "name": "ScoreInShowdown_Resp",
+    "category": "response",
+    "base_class": "RakshaItem",
+    "pair_name": "ScoreInShowdown_Req",
+    "fields": []
+  },
+  "ScoreTypeAndCount": {
+    "name": "ScoreTypeAndCount",
+    "category": "data_model",
+    "base_class": "RakshaItem",
+    "pair_name": "",
+    "fields": [
+      {
+        "name": "scoreType",
+        "type_name": "ScoreType",
+        "is_array": false
+      },
+      {
+        "name": "count",
+        "type_name": "int",
+        "is_array": false
+      }
+    ]
+  },
+  "SearchPlayersByName_Req": {
+    "name": "SearchPlayersByName_Req",
+    "category": "request",
+    "base_class": "RakshaItem",
+    "pair_name": "SearchPlayersByName_Resp",
+    "fields": [
+      {
+        "name": "name",
+        "type_name": "string",
+        "is_array": false
+      }
+    ]
+  },
+  "SearchPlayersByName_Resp": {
+    "name": "SearchPlayersByName_Resp",
+    "category": "response",
+    "base_class": "RakshaItem",
+    "pair_name": "SearchPlayersByName_Req",
+    "fields": [
+      {
+        "name": "players",
+        "type_name": "PlayerTO[]",
+        "is_array": true
+      },
+      {
+        "name": "isError",
+        "type_name": "bool",
+        "is_array": false
+      }
+    ]
+  },
+  "Season_BuyLevel_SharplaAudit": {
+    "name": "Season_BuyLevel_SharplaAudit",
+    "category": "audit_event",
+    "base_class": "SharplaCmdAudit",
+    "pair_name": "",
+    "fields": [
+      {
+        "name": "numLevels",
+        "type_name": "int",
+        "is_array": false
+      }
+    ]
+  },
+  "Season_ClaimLevel_SharplaAudit": {
+    "name": "Season_ClaimLevel_SharplaAudit",
+    "category": "audit_event",
+    "base_class": "SharplaCmdAudit",
+    "pair_name": "",
+    "fields": [
+      {
+        "name": "levelIndex",
+        "type_name": "int",
+        "is_array": false
+      },
+      {
+        "name": "premiumReward",
+        "type_name": "bool",
+        "is_array": false
+      }
+    ]
+  },
+  "Season_UpdateSeason_SharplaAudit": {
+    "name": "Season_UpdateSeason_SharplaAudit",
+    "category": "audit_event",
+    "base_class": "SharplaCmdAudit",
+    "pair_name": "",
+    "fields": []
+  },
+  "SelectFtueStarterSong_SharplaAudit": {
+    "name": "SelectFtueStarterSong_SharplaAudit",
+    "category": "audit_event",
+    "base_class": "SharplaCmdAudit",
+    "pair_name": "",
+    "fields": [
+      {
+        "name": "Beatmap_id",
+        "type_name": "uint",
+        "is_array": false
+      }
+    ]
+  },
+  "SetActiveVideoAdsProfile_SharplaAudit": {
+    "name": "SetActiveVideoAdsProfile_SharplaAudit",
+    "category": "audit_event",
+    "base_class": "SharplaCmdAudit",
+    "pair_name": "",
+    "fields": [
+      {
+        "name": "profile_id",
+        "type_name": "string",
+        "is_array": false
+      }
+    ]
+  },
+  "SetAllowVideoAdsFreeGems_SharplaAudit": {
+    "name": "SetAllowVideoAdsFreeGems_SharplaAudit",
+    "category": "audit_event",
+    "base_class": "SharplaCmdAudit",
+    "pair_name": "",
+    "fields": [
+      {
+        "name": "allowVideoAdsFreeGems",
+        "type_name": "bool",
+        "is_array": false
+      },
+      {
+        "name": "shopItemTemplate_id",
+        "type_name": "uint",
+        "is_array": false
+      }
+    ]
+  },
+  "SetAppleMusicPlaylistId_SharplaAudit": {
+    "name": "SetAppleMusicPlaylistId_SharplaAudit",
+    "category": "audit_event",
+    "base_class": "SharplaCmdAudit",
+    "pair_name": "",
+    "fields": [
+      {
+        "name": "playlistId",
+        "type_name": "string",
+        "is_array": false
+      }
+    ]
+  },
+  "SetCallingCard_SharplaAudit": {
+    "name": "SetCallingCard_SharplaAudit",
+    "category": "audit_event",
+    "base_class": "SharplaCmdAudit",
+    "pair_name": "",
+    "fields": [
+      {
+        "name": "callingCard_id",
+        "type_name": "uint",
+        "is_array": false
+      }
+    ]
+  },
+  "SetFtueFlag_SharplaAudit": {
+    "name": "SetFtueFlag_SharplaAudit",
+    "category": "audit_event",
+    "base_class": "SharplaCmdAudit",
+    "pair_name": "",
+    "fields": [
+      {
+        "name": "Flag_id",
+        "type_name": "uint",
+        "is_array": false
+      },
+      {
+        "name": "Value",
+        "type_name": "bool",
+        "is_array": false
+      }
+    ]
+  },
+  "SetGlobalTrackSkin_SharplaAudit": {
+    "name": "SetGlobalTrackSkin_SharplaAudit",
+    "category": "audit_event",
+    "base_class": "SharplaCmdAudit",
+    "pair_name": "",
+    "fields": [
+      {
+        "name": "trackSkin_id",
+        "type_name": "uint",
+        "is_array": false
+      }
+    ]
+  },
+  "SetGooglePlayGroupingToken_Req": {
+    "name": "SetGooglePlayGroupingToken_Req",
+    "category": "request",
+    "base_class": "RakshaItem",
+    "pair_name": "SetGooglePlayGroupingToken_Resp",
+    "fields": [
+      {
+        "name": "token",
+        "type_name": "string",
+        "is_array": false
+      }
+    ]
+  },
+  "SetGooglePlayGroupingToken_Resp": {
+    "name": "SetGooglePlayGroupingToken_Resp",
+    "category": "response",
+    "base_class": "RakshaItem",
+    "pair_name": "SetGooglePlayGroupingToken_Req",
+    "fields": []
+  },
+  "SetHasSeenBonusCardsReward_SharplaAudit": {
+    "name": "SetHasSeenBonusCardsReward_SharplaAudit",
+    "category": "audit_event",
+    "base_class": "SharplaCmdAudit",
+    "pair_name": "",
+    "fields": []
+  },
+  "SetPerfectPlusColourOverride_SharplaAudit": {
+    "name": "SetPerfectPlusColourOverride_SharplaAudit",
+    "category": "audit_event",
+    "base_class": "SharplaCmdAudit",
+    "pair_name": "",
+    "fields": [
+      {
+        "name": "ColourOverride_id",
+        "type_name": "uint",
+        "is_array": false
+      }
+    ]
+  },
+  "SetPlayerCustomisation_SharplaAudit": {
+    "name": "SetPlayerCustomisation_SharplaAudit",
+    "category": "audit_event",
+    "base_class": "SharplaCmdAudit",
+    "pair_name": "",
+    "fields": [
+      {
+        "name": "Data",
+        "type_name": "PlayerCustomisationsAuditData",
+        "is_array": false
+      }
+    ]
+  },
+  "SetPlayerName_SharplaAudit": {
+    "name": "SetPlayerName_SharplaAudit",
+    "category": "audit_event",
+    "base_class": "SharplaCmdAudit",
+    "pair_name": "",
+    "fields": [
+      {
+        "name": "name",
+        "type_name": "string",
+        "is_array": false
+      }
+    ]
+  },
+  "SetPlayerName_SharplaRpcReq": {
+    "name": "SetPlayerName_SharplaRpcReq",
+    "category": "request",
+    "base_class": "SharplaRpcRequest",
+    "pair_name": "SetPlayerName_SharplaRpcResp",
+    "fields": [
+      {
+        "name": "name",
+        "type_name": "string",
+        "is_array": false
+      }
+    ]
+  },
+  "SetPlayerName_SharplaRpcResp": {
+    "name": "SetPlayerName_SharplaRpcResp",
+    "category": "response",
+    "base_class": "SharplaRpcResponse",
+    "pair_name": "SetPlayerName_SharplaRpcReq",
+    "fields": [
+      {
+        "name": "allowed",
+        "type_name": "bool",
+        "is_array": false
+      }
+    ]
+  },
+  "SetProfileIcon_SharplaAudit": {
+    "name": "SetProfileIcon_SharplaAudit",
+    "category": "audit_event",
+    "base_class": "SharplaCmdAudit",
+    "pair_name": "",
+    "fields": [
+      {
+        "name": "profileIcon_id",
+        "type_name": "uint",
+        "is_array": false
+      }
+    ]
+  },
+  "SetPromoInterstitialSeen_SharplaAudit": {
+    "name": "SetPromoInterstitialSeen_SharplaAudit",
+    "category": "audit_event",
+    "base_class": "SharplaCmdAudit",
+    "pair_name": "",
+    "fields": [
+      {
+        "name": "PromoInterstitial_id",
+        "type_name": "uint",
+        "is_array": false
+      }
+    ]
+  },
+  "SetSelectedSong_SharplaAudit": {
+    "name": "SetSelectedSong_SharplaAudit",
+    "category": "audit_event",
+    "base_class": "SharplaCmdAudit",
+    "pair_name": "",
+    "fields": [
+      {
+        "name": "song_id",
+        "type_name": "uint",
+        "is_array": false
+      },
+      {
+        "name": "medalChaseMode",
+        "type_name": "bool",
+        "is_array": false
+      },
+      {
+        "name": "songSelectionSourceType",
+        "type_name": "SongSelectSourceType",
+        "is_array": false
+      }
+    ]
+  },
+  "SetShopItemAlertShownDate_SharplaAudit": {
+    "name": "SetShopItemAlertShownDate_SharplaAudit",
+    "category": "audit_event",
+    "base_class": "SharplaCmdAudit",
+    "pair_name": "",
+    "fields": [
+      {
+        "name": "shopItemId",
+        "type_name": "uint",
+        "is_array": false
+      },
+      {
+        "name": "timeMsecs",
+        "type_name": "long",
+        "is_array": false
+      }
+    ]
+  },
+  "SetStatusForLeaderboardEvent_SharplaAudit": {
+    "name": "SetStatusForLeaderboardEvent_SharplaAudit",
+    "category": "audit_event",
+    "base_class": "SharplaCmdAudit",
+    "pair_name": "",
+    "fields": [
+      {
+        "name": "game_id",
+        "type_name": "uint",
+        "is_array": false
+      },
+      {
+        "name": "status",
+        "type_name": "ShowdownPlayerStatus",
+        "is_array": false
+      }
+    ]
+  },
+  "SetVideoAdsConsentGiven_SharplaAudit": {
+    "name": "SetVideoAdsConsentGiven_SharplaAudit",
+    "category": "audit_event",
+    "base_class": "SharplaCmdAudit",
+    "pair_name": "",
+    "fields": [
+      {
+        "name": "videoAdsConsentGiven",
+        "type_name": "AgeProvidedStateType",
+        "is_array": false
+      }
+    ]
+  },
+  "Share_Req": {
+    "name": "Share_Req",
+    "category": "request",
+    "base_class": "RakshaItem",
+    "pair_name": "Share_Resp",
+    "fields": [
+      {
+        "name": "beatmap_id",
+        "type_name": "uint",
+        "is_array": false
+      },
+      {
+        "name": "emoji_id",
+        "type_name": "uint",
+        "is_array": false
+      },
+      {
+        "name": "score",
+        "type_name": "BeatmapScore",
+        "is_array": false
+      }
+    ]
+  },
+  "Share_Resp": {
+    "name": "Share_Resp",
+    "category": "response",
+    "base_class": "RakshaItem",
+    "pair_name": "Share_Req",
+    "fields": [
+      {
+        "name": "id",
+        "type_name": "string",
+        "is_array": false
+      }
+    ]
+  },
+  "SharplaGameCmdHeader": {
+    "name": "SharplaGameCmdHeader",
+    "category": "header",
+    "base_class": "SharplaCmdHeader",
+    "pair_name": "",
+    "fields": [
+      {
+        "name": "hardCurrency",
+        "type_name": "int",
+        "is_array": false
+      },
+      {
+        "name": "softCurrency",
+        "type_name": "int",
+        "is_array": false
+      },
+      {
+        "name": "randomSeeds",
+        "type_name": "long",
+        "is_array": false
+      },
+      {
+        "name": "numSongs",
+        "type_name": "int",
+        "is_array": false
+      },
+      {
+        "name": "lastUnlockedSong_id",
+        "type_name": "uint",
+        "is_array": false
+      },
+      {
+        "name": "totalSongScore",
+        "type_name": "double",
+        "is_array": false
+      },
+      {
+        "name": "saveCount_deprecated",
+        "type_name": "int",
+        "is_array": false
+      }
+    ]
+  },
+  "ShopSystemRefresh_SharplaAudit": {
+    "name": "ShopSystemRefresh_SharplaAudit",
+    "category": "audit_event",
+    "base_class": "SharplaCmdAudit",
+    "pair_name": "",
+    "fields": []
+  },
+  "ShowdownPlayerEntry": {
+    "name": "ShowdownPlayerEntry",
+    "category": "data_model",
+    "base_class": "RakshaItem",
+    "pair_name": "",
+    "fields": [
+      {
+        "name": "clide",
+        "type_name": "string",
+        "is_array": false
+      },
+      {
+        "name": "scores",
+        "type_name": "List<ShowdownPlayerScore>",
+        "is_array": true
+      },
+      {
+        "name": "joinedTimeMsecs",
+        "type_name": "long",
+        "is_array": false
+      },
+      {
+        "name": "status",
+        "type_name": "ShowdownPlayerStatus",
+        "is_array": false
+      },
+      {
+        "name": "skillPercent3dp",
+        "type_name": "int",
+        "is_array": false
+      }
+    ]
+  },
+  "ShowdownPlayerScore": {
+    "name": "ShowdownPlayerScore",
+    "category": "data_model",
+    "base_class": "RakshaItem",
+    "pair_name": "",
+    "fields": [
+      {
+        "name": "beatmap_id",
+        "type_name": "uint",
+        "is_array": false
+      },
+      {
+        "name": "score",
+        "type_name": "int",
+        "is_array": false
+      }
+    ]
+  },
+  "ShowdownPlayerStatus": {
+    "name": "ShowdownPlayerStatus",
+    "category": "data_model",
+    "base_class": "RakshaItem",
+    "pair_name": "",
+    "fields": [
+      {
+        "name": "emote_id",
+        "type_name": "uint",
+        "is_array": false
+      },
+      {
+        "name": "gameStartedTimeMsecs",
+        "type_name": "long",
+        "is_array": false
+      },
+      {
+        "name": "emotedTimeMsecs",
+        "type_name": "long",
+        "is_array": false
+      }
+    ]
+  },
+  "ShowdownTO": {
+    "name": "ShowdownTO",
+    "category": "data_model",
+    "base_class": "RakshaItem",
+    "pair_name": "",
+    "fields": [
+      {
+        "name": "endTimeMsecs",
+        "type_name": "long",
+        "is_array": false
+      },
+      {
+        "name": "players",
+        "type_name": "List<ShowdownPlayerEntry>",
+        "is_array": true
+      },
+      {
+        "name": "id",
+        "type_name": "string",
+        "is_array": false
+      },
+      {
+        "name": "bucket_id",
+        "type_name": "uint",
+        "is_array": false
+      }
+    ]
+  },
+  "SkipOpeningOfCampaignGachaBox_SharplaAudit": {
+    "name": "SkipOpeningOfCampaignGachaBox_SharplaAudit",
+    "category": "audit_event",
+    "base_class": "SharplaCmdAudit",
+    "pair_name": "",
+    "fields": [
+      {
+        "name": "slotTemplate_id",
+        "type_name": "uint",
+        "is_array": false
+      }
+    ]
+  },
+  "StartAdWatch_SharplaAudit": {
+    "name": "StartAdWatch_SharplaAudit",
+    "category": "audit_event",
+    "base_class": "SharplaCmdAudit",
+    "pair_name": "",
+    "fields": [
+      {
+        "name": "AdInProgress",
+        "type_name": "VideoAdInProgressTO",
+        "is_array": false
+      }
+    ]
+  },
+  "StartCountdownOnCampaignGachaBox_SharplaAudit": {
+    "name": "StartCountdownOnCampaignGachaBox_SharplaAudit",
+    "category": "audit_event",
+    "base_class": "SharplaCmdAudit",
+    "pair_name": "",
+    "fields": [
+      {
+        "name": "slotTemplate_id",
+        "type_name": "uint",
+        "is_array": false
+      },
+      {
+        "name": "speedupForVideoAd",
+        "type_name": "bool",
+        "is_array": false
+      }
+    ]
+  },
+  "StartIAPPurchase_SharplaAudit": {
+    "name": "StartIAPPurchase_SharplaAudit",
+    "category": "audit_event",
+    "base_class": "SharplaCmdAudit",
+    "pair_name": "",
+    "fields": [
+      {
+        "name": "purchaseData",
+        "type_name": "IAPPurchaseData",
+        "is_array": false
+      }
+    ]
+  },
+  "StartSharplaSessionRequest": {
+    "name": "StartSharplaSessionRequest",
+    "category": "request",
+    "base_class": "StartSessionRequest",
+    "pair_name": "StartSharplaSessionRequest",
+    "fields": [
+      {
+        "name": "session",
+        "type_name": "PlayerSessionTO",
+        "is_array": false
+      },
+      {
+        "name": "analytics_device",
+        "type_name": "AnalyticsDeviceTO",
+        "is_array": false
+      },
+      {
+        "name": "analytics_attribution",
+        "type_name": "AnalyticsAttributionTO",
+        "is_array": false
+      },
+      {
+        "name": "analytics_testing",
+        "type_name": "List<AnalyticsTestGroupTO>",
+        "is_array": true
+      },
+      {
+        "name": "cheatClientCountryCode",
+        "type_name": "string",
+        "is_array": false
+      },
+      {
+        "name": "updatedCountryCode",
+        "type_name": "string",
+        "is_array": false
+      },
+      {
+        "name": "forceNameChange",
+        "type_name": "PlayerNameTO",
+        "is_array": false
+      },
+      {
+        "name": "currentPlayerLocationCountryCode",
+        "type_name": "string",
+        "is_array": false
+      },
+      {
+        "name": "appValidationData",
+        "type_name": "string",
+        "is_array": false
+      }
+    ]
+  },
+  "SyncReq": {
+    "name": "SyncReq",
+    "category": "data_model",
+    "base_class": "RakshaItem",
+    "pair_name": "",
+    "fields": [
+      {
+        "name": "startRequest",
+        "type_name": "StartSharplaSessionRequest",
+        "is_array": false
+      },
+      {
+        "name": "langConfigVersion",
+        "type_name": "string",
+        "is_array": false
+      },
+      {
+        "name": "gameConfigVersion",
+        "type_name": "string",
+        "is_array": false
+      },
+      {
+        "name": "songConfigVersion",
+        "type_name": "string",
+        "is_array": false
+      },
+      {
+        "name": "callingCardConfigVersion",
+        "type_name": "string",
+        "is_array": false
+      },
+      {
+        "name": "liveOpsProfileIconConfigVersion",
+        "type_name": "string",
+        "is_array": false
+      },
+      {
+        "name": "liveOpsTrackSkinConfigVersion",
+        "type_name": "string",
+        "is_array": false
+      },
+      {
+        "name": "liveOpsEmojiConfigVersion",
+        "type_name": "string",
+        "is_array": false
+      }
+    ]
+  },
+  "SyncResp": {
+    "name": "SyncResp",
+    "category": "data_model",
+    "base_class": "RakshaItem",
+    "pair_name": "",
+    "fields": [
+      {
+        "name": "profile",
+        "type_name": "MyProfileTO",
+        "is_array": false
+      },
+      {
+        "name": "hasClaimableRewards",
+        "type_name": "bool",
+        "is_array": false
+      },
+      {
+        "name": "playerHubStatus",
+        "type_name": "int",
+        "is_array": false
+      },
+      {
+        "name": "newsFeedConfig",
+        "type_name": "NewsFeed",
+        "is_array": false
+      },
+      {
+        "name": "liveOpsBundleConfig",
+        "type_name": "LiveOpsBundleConfig",
+        "is_array": false
+      },
+      {
+        "name": "liveOpsDeeplinkRewardConfig",
+        "type_name": "LiveOpsDeeplinkRewardConfig",
+        "is_array": false
+      },
+      {
+        "name": "liveOpsEventConfig",
+        "type_name": "LiveOpsEventConfig",
+        "is_array": false
+      },
+      {
+        "name": "liveOpsSeasonConfig",
+        "type_name": "LiveOpsSeasonConfig",
+        "is_array": false
+      },
+      {
+        "name": "liveOpsLoadingScreenConfig",
+        "type_name": "LiveOpsLoadingScreenConfig",
+        "is_array": false
+      }
+    ]
+  },
+  "SyncShowdown_Req": {
+    "name": "SyncShowdown_Req",
+    "category": "request",
+    "base_class": "RakshaItem",
+    "pair_name": "SyncShowdown_Resp",
+    "fields": [
+      {
+        "name": "roomId",
+        "type_name": "string",
+        "is_array": false
+      }
+    ]
+  },
+  "SyncShowdown_Resp": {
+    "name": "SyncShowdown_Resp",
+    "category": "response",
+    "base_class": "RakshaItem",
+    "pair_name": "SyncShowdown_Req",
+    "fields": [
+      {
+        "name": "showdown",
+        "type_name": "ShowdownTO",
+        "is_array": false
+      }
+    ]
+  },
+  "UpdateAttribution_SharplaAudit": {
+    "name": "UpdateAttribution_SharplaAudit",
+    "category": "audit_event",
+    "base_class": "SharplaCmdAudit",
+    "pair_name": "",
+    "fields": [
+      {
+        "name": "campaign",
+        "type_name": "string",
+        "is_array": false
+      },
+      {
+        "name": "creative",
+        "type_name": "string",
+        "is_array": false
+      },
+      {
+        "name": "adset",
+        "type_name": "string",
+        "is_array": false
+      },
+      {
+        "name": "setCampaign",
+        "type_name": "bool",
+        "is_array": false
+      },
+      {
+        "name": "setCreative",
+        "type_name": "bool",
+        "is_array": false
+      },
+      {
+        "name": "setAdset",
+        "type_name": "bool",
+        "is_array": false
+      }
+    ]
+  },
+  "UpdateEventTotaliserVideoAds_SharplaAudit": {
+    "name": "UpdateEventTotaliserVideoAds_SharplaAudit",
+    "category": "audit_event",
+    "base_class": "SharplaCmdAudit",
+    "pair_name": "",
+    "fields": []
+  },
+  "UpdateLikedBeatmaps_SharplaAudit": {
+    "name": "UpdateLikedBeatmaps_SharplaAudit",
+    "category": "audit_event",
+    "base_class": "SharplaCmdAudit",
+    "pair_name": "",
+    "fields": [
+      {
+        "name": "toAdd_id",
+        "type_name": "uint[]",
+        "is_array": true
+      },
+      {
+        "name": "toRemove_id",
+        "type_name": "uint[]",
+        "is_array": true
+      }
+    ]
+  },
+  "UpdateShopIAPState_SharplaAudit": {
+    "name": "UpdateShopIAPState_SharplaAudit",
+    "category": "audit_event",
+    "base_class": "SharplaCmdAudit",
+    "pair_name": "",
+    "fields": [
+      {
+        "name": "ForShopItem_id",
+        "type_name": "uint",
+        "is_array": false
+      }
+    ]
+  },
+  "UpdateShopSystems_SharplaAudit": {
+    "name": "UpdateShopSystems_SharplaAudit",
+    "category": "audit_event",
+    "base_class": "SharplaCmdAudit",
+    "pair_name": "",
+    "fields": []
+  },
+  "UseFriendInviteToken_Req": {
+    "name": "UseFriendInviteToken_Req",
+    "category": "request",
+    "base_class": "RakshaItem",
+    "pair_name": "UseFriendInviteToken_Resp",
+    "fields": [
+      {
+        "name": "token",
+        "type_name": "string",
+        "is_array": false
+      }
+    ]
+  },
+  "UseFriendInviteToken_Resp": {
+    "name": "UseFriendInviteToken_Resp",
+    "category": "response",
+    "base_class": "RakshaItem",
+    "pair_name": "UseFriendInviteToken_Req",
+    "fields": []
+  },
+  "WatchAdTotaliserAd_SharplaAudit": {
+    "name": "WatchAdTotaliserAd_SharplaAudit",
+    "category": "audit_event",
+    "base_class": "SharplaCmdAudit",
+    "pair_name": "",
+    "fields": []
+  }
+}
