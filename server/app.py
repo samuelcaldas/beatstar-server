@@ -101,12 +101,48 @@ async def socket_gateway(request: Request) -> Response:
 
 @app.get("/assets/configs/{config_name}")
 async def get_config(config_name: str) -> dict[str, Any]:
-    """Delivers CMS game configuration files."""
+    """Delivers CMS game configuration files including Feature Flags and Ads."""
+    config_key = config_name.lower()
+    now_ms = int(datetime.now(TIMEZONE).timestamp() * 1000)
+
+    if "adsconfig" in config_key:
+        return {
+            "name": "AdsConfig",
+            "version": 1,
+            "timestamp": now_ms,
+            "data": {
+                "feature_flag_enabled": settings.feature_flag_google_ads_enabled,
+                "app_id": settings.google_ads_app_id,
+                "rewarded_unit_id": settings.google_ads_rewarded_unit_id,
+                "interstitial_unit_id": settings.google_ads_interstitial_unit_id,
+                "instant_reward_on_disabled": True,
+            },
+        }
+
+    if "gameconfig" in config_key:
+        return {
+            "name": "GameConfig",
+            "version": 1,
+            "timestamp": now_ms,
+            "data": {
+                "feature_flags": {
+                    "VideoAdsEnabled": settings.feature_flag_google_ads_enabled,
+                    "BonusCardAdsInEventsTabEnabled": settings.feature_flag_google_ads_enabled,
+                    "UseAdBonusCardSkipCooldown": True,
+                },
+                "ads_config": {
+                    "app_id": settings.google_ads_app_id,
+                    "rewarded_unit_id": settings.google_ads_rewarded_unit_id,
+                    "interstitial_unit_id": settings.google_ads_interstitial_unit_id,
+                },
+            },
+        }
+
     return {
         "name": config_name,
         "version": 1,
         "data": {},
-        "timestamp": int(datetime.now(TIMEZONE).timestamp() * 1000),
+        "timestamp": now_ms,
     }
 
 
