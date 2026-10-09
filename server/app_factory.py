@@ -24,7 +24,8 @@ from server.gameplay.router import build_gameplay_router
 from server.gameplay.service import GameplayService
 from server.gateway.dispatcher import GatewayDispatcher
 from server.assets.client_adapters import SOURCE_ONLY, ClientAdapterFactory
-from server.assets.ingest import AssetLimits, MediaProbe, UnavailableProbe
+from server.assets.ingest import AssetLimits, MediaProbe
+from server.assets.probes import default_media_probe
 from server.assets.storage import AssetStorage
 from server.music.asset_router import register_asset_error_handlers
 from server.music.song_router import register_song_error_handlers
@@ -118,7 +119,7 @@ def create_app(
     if resolved_admin is not None:
         app.state.asset_limits = asset_limits or AssetLimits()
         app.state.asset_storage = AssetStorage(asset_root or settings.asset_storage_root / "uploads")
-        app.state.media_probe = media_probe or UnavailableProbe()
+        app.state.media_probe = media_probe or default_media_probe()
         app.state.client_adapter = ClientAdapterFactory.default().create(SOURCE_ONLY)
     app.include_router(core_router)
     app.include_router(
