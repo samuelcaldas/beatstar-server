@@ -18,6 +18,7 @@ from server.storage.player_repository import PlayerRepository
 
 
 from server.commerce import CommerceService
+from server.gameplay import GameplayService
 
 
 class GatewayDispatcher:
@@ -26,11 +27,13 @@ class GatewayDispatcher:
     def __init__(self, db_manager: DatabaseManager) -> None:
         self.repository = PlayerRepository(db_manager)
         self.commerce_service = CommerceService()
+        self.gameplay_service = GameplayService(db_manager)
         self.session_handler = SessionHandler(self.repository)
         self.cms_handler = CMSHandler()
         self.profile_handler = ProfileHandler(self.repository)
-        self.sync_handler = SyncHandler(self.repository, self.commerce_service)
+        self.sync_handler = SyncHandler(self.repository, self.commerce_service, self.gameplay_service)
         self.songs_handler = SongsHandler()
+
 
 
     async def dispatch_payload(

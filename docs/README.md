@@ -16,6 +16,7 @@ Este diretório contém a documentação técnica, especificações de protocolo
 - [client_patching_guide.md](file:///home/samuelcaldas/repos/beatstar/docs/sot/client_patching_guide.md) - Instruções para patch de APK e injeção de hooks para conexão do cliente ao servidor privado.
 - [ads_and_monetization_guide.md](file:///home/samuelcaldas/repos/beatstar/docs/sot/ads_and_monetization_guide.md) - Guia de configuração de Feature Flag e injeção de conta personalizada do Google Ads / AdMob & AppLovin.
 - [commerce_and_feature_flags_guide.md](file:///home/samuelcaldas/repos/beatstar/docs/sot/commerce_and_feature_flags_guide.md) - Guia de Feature Flags de compras e SDK de comércio server-side (IAP, Loja, Lootboxes, Tour Pass, Skins).
+- [gameplay_and_progression_guide.md](file:///home/samuelcaldas/repos/beatstar/docs/sot/gameplay_and_progression_guide.md) - Guia de arquitetura e SDK do sistema de progressão de níveis (Venues/Jornada), multi-usuários, ranking (Leaderboards) e brags/desafios.
 
 
 ### 3. Decisões Arquiteturais (`docs/adr/`)
