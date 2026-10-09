@@ -17,6 +17,8 @@ from server.storage.database import DatabaseManager
 
 # Configuração de timezone America/Sao_Paulo
 os.environ["TZ"] = settings.timezone
+from server.commerce.router import commerce_router
+
 TIMEZONE = zoneinfo.ZoneInfo(settings.timezone)
 
 db_manager = DatabaseManager(settings.database_url.replace("sqlite+aiosqlite:///", ""))
@@ -37,6 +39,8 @@ app = FastAPI(
     lifespan=lifespan,
 )
 
+app.include_router(commerce_router, prefix="/api/commerce", tags=["commerce"])
+
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],
@@ -44,6 +48,7 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
 
 
 @app.get("/health")
@@ -120,16 +125,18 @@ async def get_config(config_name: str) -> dict[str, Any]:
         }
 
     if "gameconfig" in config_key:
+        flags = {
+            "VideoAdsEnabled": settings.feature_flag_google_ads_enabled,
+            "BonusCardAdsInEventsTabEnabled": settings.feature_flag_google_ads_enabled,
+            "UseAdBonusCardSkipCooldown": True,
+        }
+        flags.update(dispatcher.commerce_service.flags.to_game_config_flags())
         return {
             "name": "GameConfig",
             "version": 1,
             "timestamp": now_ms,
             "data": {
-                "feature_flags": {
-                    "VideoAdsEnabled": settings.feature_flag_google_ads_enabled,
-                    "BonusCardAdsInEventsTabEnabled": settings.feature_flag_google_ads_enabled,
-                    "UseAdBonusCardSkipCooldown": True,
-                },
+                "feature_flags": flags,
                 "ads_config": {
                     "app_id": settings.google_ads_app_id,
                     "rewarded_unit_id": settings.google_ads_rewarded_unit_id,
@@ -137,6 +144,7 @@ async def get_config(config_name: str) -> dict[str, Any]:
                 },
             },
         }
+
 
     return {
         "name": config_name,

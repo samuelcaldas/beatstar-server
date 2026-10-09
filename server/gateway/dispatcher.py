@@ -17,16 +17,21 @@ from server.storage.database import DatabaseManager
 from server.storage.player_repository import PlayerRepository
 
 
+from server.commerce import CommerceService
+
+
 class GatewayDispatcher:
     """Dispatches requests to appropriate service handlers."""
 
     def __init__(self, db_manager: DatabaseManager) -> None:
         self.repository = PlayerRepository(db_manager)
+        self.commerce_service = CommerceService()
         self.session_handler = SessionHandler(self.repository)
         self.cms_handler = CMSHandler()
         self.profile_handler = ProfileHandler(self.repository)
-        self.sync_handler = SyncHandler(self.repository)
+        self.sync_handler = SyncHandler(self.repository, self.commerce_service)
         self.songs_handler = SongsHandler()
+
 
     async def dispatch_payload(
         self, header: ClientHeader, body: dict[str, Any]
