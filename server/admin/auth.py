@@ -20,6 +20,7 @@ from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker
 from server.admin.models import AdministratorSession, AdministratorUser
 from server.admin.settings import AdminAuthSettings
 from server.admin.throttle import LoginAttemptLimiter
+from server.music.song_router import build_song_library_router
 
 SESSION_COOKIE = "beatstar_admin"
 CSRF_COOKIE = "beatstar_admin_csrf"
@@ -170,4 +171,11 @@ def build_admin_router(
         """Returns the authenticated administrator's identity without credential material."""
         return {"id": str(user.id), "email": user.email}
 
+    router.include_router(
+        build_song_library_router(
+            get_session,
+            users.current_user(active=True, superuser=True),
+            require_csrf,
+        )
+    )
     return router

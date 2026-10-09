@@ -22,6 +22,7 @@ from server.config import ServerSettings, settings
 from server.gameplay.router import build_gameplay_router
 from server.gameplay.service import GameplayService
 from server.gateway.dispatcher import GatewayDispatcher
+from server.music.song_router import register_song_error_handlers
 from server.storage.database import DatabaseManager
 from server.storage.migrations.runner import upgrade_to_head
 from server.storage.player_repository import PlayerRepository
@@ -104,6 +105,7 @@ def create_app(
     app.state.database = database
     app.state.dispatcher = dispatcher
     app.state.admin_session_maker = admin_session_maker
+    register_song_error_handlers(app)
     app.include_router(core_router)
     app.include_router(
         build_commerce_router(CommerceService(), repository),

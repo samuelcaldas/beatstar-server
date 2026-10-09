@@ -40,6 +40,9 @@ class Song(Base):
     id: Mapped[str] = mapped_column(String(36), primary_key=True, default=new_identifier)
     title: Mapped[str] = mapped_column(String(200), nullable=False)
     artist: Mapped[str] = mapped_column(String(200), nullable=False)
+    difficulty: Mapped[str] = mapped_column(
+        String(16), nullable=False, default="normal", server_default="normal"
+    )
     status: Mapped[str] = mapped_column(String(16), nullable=False, default="draft")
     revision: Mapped[int] = mapped_column(Integer, nullable=False, default=1)
     created_at: Mapped[int] = mapped_column(Integer, nullable=False, default=now_milliseconds)
