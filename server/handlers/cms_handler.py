@@ -14,6 +14,9 @@ class CMSHandler(BaseServiceHandler):
 
     CATALOG_NAMES = [
         "GameConfig",
+        "SongConfig",
+        "BeatmapsConfig",
+        "AssetsConfig",
         "LangConfig",
         "AssetsPatchConfig",
         "AudioConfig",
