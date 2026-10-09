@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import os
 from pathlib import Path
-from pydantic import Field
+from pydantic import Field, SecretStr
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
@@ -41,6 +41,13 @@ class ServerSettings(BaseSettings):
 
     asset_storage_root: Path = Field(default=Path("data"), alias="ASSET_STORAGE_ROOT")
     cors_origins: list[str] = Field(default_factory=list, alias="CORS_ORIGINS")
+
+    # Administration (separate from game tickets; admin routes stay unmounted without a secret)
+    admin_auth_secret: SecretStr | None = Field(default=None, alias="ADMIN_AUTH_SECRET")
+    admin_session_lifetime_seconds: int = Field(default=8 * 60 * 60, alias="ADMIN_SESSION_LIFETIME_SECONDS")
+    admin_cookie_secure: bool = Field(default=True, alias="ADMIN_COOKIE_SECURE")
+    admin_login_max_attempts: int = Field(default=5, alias="ADMIN_LOGIN_MAX_ATTEMPTS")
+    admin_login_window_seconds: int = Field(default=900, alias="ADMIN_LOGIN_WINDOW_SECONDS")
 
     jwt_secret_key: str = Field(
         default="beatstar-default-secret-key-32chars-minimum!",
