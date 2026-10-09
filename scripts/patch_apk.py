@@ -276,7 +276,14 @@ def main() -> None:
         default=None,
         help="Custom interstitial ad unit ID",
     )
+    # Feature Flags de Compras e Loja
+    parser.add_argument("--disable-iap", dest="enable_iap", action="store_false", default=True, help="Desabilita IAP")
+    parser.add_argument("--disable-shop", dest="enable_shop", action="store_false", default=True, help="Desabilita loja")
+    parser.add_argument("--disable-lootboxes", dest="enable_lootboxes", action="store_false", default=True, help="Desabilita caixas")
+    parser.add_argument("--disable-premium", dest="enable_premium", action="store_false", default=True, help="Desabilita Tour Pass")
+    parser.add_argument("--disable-cosmetics", dest="enable_cosmetics", action="store_false", default=True, help="Desabilita cosméticos")
     args = parser.parse_args()
+
 
     patcher = ApkPatcher(
         apk_path=args.apk,

@@ -65,5 +65,28 @@ class ServerSettings(BaseSettings):
         alias="GOOGLE_ADS_INTERSTITIAL_UNIT_ID",
     )
 
+    # Feature Flags de Compras, Economia e Loja (In-App Purchases & SDK)
+    feature_flag_iap_enabled: bool = Field(
+        default=False,
+        alias="FEATURE_FLAG_IAP_ENABLED",
+    )
+    feature_flag_shop_enabled: bool = Field(
+        default=True,
+        alias="FEATURE_FLAG_SHOP_ENABLED",
+    )
+    feature_flag_lootboxes_enabled: bool = Field(
+        default=True,
+        alias="FEATURE_FLAG_LOOTBOXES_ENABLED",
+    )
+    feature_flag_premium_pass_enabled: bool = Field(
+        default=True,
+        alias="FEATURE_FLAG_PREMIUM_PASS_ENABLED",
+    )
+    feature_flag_cosmetics_enabled: bool = Field(
+        default=True,
+        alias="FEATURE_FLAG_COSMETICS_ENABLED",
+    )
+
+
 
 settings = ServerSettings()
