@@ -21,3 +21,27 @@ vendor/
 venv/
 __pycache__/
 *.py[cod]
+
+# Binary and Package Files
+*.apkm
+*.apk
+*.so
+*.dat
+*.bundle
+*.unity3d
+
+# Reverse Engineering Outputs and Artifacts
+extracted/
+decompiled/
+tools/bin/
+tools/jadx/
+tools/Il2CppDumper/
+dump.cs
+script.json
+stringliteral.json
+DummyDll/
+
+# Databases & local state
+*.db
+*.sqlite
+*.sqlite3
