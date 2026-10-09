@@ -14,6 +14,7 @@ import uuid
 from pathlib import Path
 
 ALLOWED_EXTENSIONS = frozenset({".wav", ".ogg", ".mp3", ".png", ".jpg"})
+PREVIEW_SUFFIX = ".peaks.json"
 DIGEST_PATTERN = re.compile(r"[0-9a-f]{64}")
 CHUNK_BYTES = 1024 * 1024
 
@@ -58,7 +59,8 @@ class AssetStorage:
         self._root = root
         self._staging = root / "staging"
         self._objects = root / "objects"
-        for directory in (self._root, self._staging, self._objects):
+        self._previews = root / "previews"
+        for directory in (self._root, self._staging, self._objects, self._previews):
             directory.mkdir(parents=True, exist_ok=True)
             if directory.is_symlink():
                 raise ValueError(f"{directory.name} must not be a symlink")
@@ -67,6 +69,32 @@ class AssetStorage:
     def objects_directory(self) -> Path:
         """Directory holding committed, immutable objects."""
         return self._objects
+
+    def preview_path(self, digest: str) -> Path:
+        """Returns the address of the waveform preview derived from the object with this digest.
+
+        Raises:
+            ValueError: when the digest is not 64 lowercase hex characters.
+        """
+        if DIGEST_PATTERN.fullmatch(digest) is None:
+            raise ValueError("Preview address must be a lowercase SHA-256 hex digest")
+        return self._previews / digest[:2] / f"{digest}{PREVIEW_SUFFIX}"
+
+    def commit_preview(self, staged: Path, digest: str) -> Path:
+        """Places a derived preview at its address; identical content is reused, different content conflicts.
+
+        Raises:
+            ConflictingObject: when a different preview already occupies the address.
+        """
+        target = self.preview_path(digest)
+        if target.exists():
+            if _file_digest(target) != _file_digest(staged):
+                raise ConflictingObject(target.name)
+            staged.unlink(missing_ok=True)
+            return target
+        target.parent.mkdir(parents=True, exist_ok=True)
+        os.replace(staged, target)
+        return target
 
     def new_staging_path(self) -> Path:
         """Returns a fresh, unpredictable path inside the staging directory."""

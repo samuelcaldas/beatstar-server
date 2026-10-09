@@ -10,7 +10,7 @@ from pydantic import BaseModel, ConfigDict
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from server.admin.models import AdministratorUser
-from server.assets.formats import default_registry
+from server.assets.formats import AUDIO, default_registry
 from server.assets.ingest import (
     AssetIngestor,
     AssetLimits,
@@ -55,7 +55,7 @@ def build_asset_router(
         state = request.app.state
         limits: AssetLimits = state.asset_limits
         ingestor = AssetIngestor(state.asset_storage, default_registry(), state.client_adapter, limits)
-        return AssetService(session, ingestor, state.media_probe, limits)
+        return AssetService(session, ingestor, state.media_probe, state.waveform_generator, limits)
 
     ServiceDependency = Annotated[AssetService, Depends(get_service)]
     AdministratorDependency = Annotated[AdministratorUser, Depends(current_administrator)]
@@ -88,6 +88,22 @@ def build_asset_router(
         if not os.path.isfile(path):
             raise AssetNotFound(asset_id)
         return FileResponse(path, media_type=asset.content_type, headers={"Cache-Control": "no-store"})
+
+    @router.get("/assets/{asset_id}/waveform")
+    async def read_asset_waveform(
+        asset_id: str,
+        request: Request,
+        service: ServiceDependency,
+        _administrator: AdministratorDependency,
+    ) -> FileResponse:
+        """Serves the immutable waveform preview of an audio asset; other kinds have none."""
+        asset = await service.find(asset_id)
+        if asset.kind != AUDIO:
+            raise AssetNotFound(asset_id)
+        path = request.app.state.asset_storage.preview_path(asset.sha256)
+        if not os.path.isfile(path):
+            raise AssetNotFound(asset_id)
+        return FileResponse(path, media_type="application/json", headers={"Cache-Control": "no-store"})
 
     return router
 

@@ -55,31 +55,44 @@ class FfprobeAudioProbe:
             self._binary, "-v", "error", "-protocol_whitelist", "file",
             "-print_format", "json", "-show_format", "-show_streams", str(path),
         ]
-        stdout = self._run(command)
+        stdout = run_tool(command, self._timeout, "ffprobe", "Audio could not be read")
         return _audio_report(stdout)
 
-    def _run(self, command: list[str]) -> bytes:
-        """Runs the command in its own session and returns stdout when it exits successfully."""
-        try:
-            process = subprocess.Popen(
-                command,
-                stdout=subprocess.PIPE,
-                stderr=subprocess.DEVNULL,
-                env={"PATH": os.environ.get("PATH", "/usr/bin:/bin")},
-                start_new_session=True,
-                preexec_fn=_limit_tool_resources,
-            )
-        except FileNotFoundError as error:
-            raise VerificationUnavailable("ffprobe is not installed") from error
-        try:
-            stdout, _ = process.communicate(timeout=self._timeout)
-        except subprocess.TimeoutExpired as error:
-            os.killpg(process.pid, signal.SIGKILL)
-            process.communicate()
-            raise ProbeTimeout("ffprobe exceeded its time budget") from error
-        if process.returncode != 0:
-            raise ProbeRejected("Audio could not be read")
-        return stdout
+
+def run_tool(command: list[str], timeout_seconds: float, tool: str, rejection: str) -> bytes:
+    """Runs an external media tool in its own session and returns stdout when it succeeds.
+
+    Args:
+        command: Argument list; never passed through a shell.
+        timeout_seconds: Wall-clock budget; the whole process group is killed when it expires.
+        tool: Name used in messages.
+        rejection: Message used when the tool exits non-zero.
+
+    Raises:
+        VerificationUnavailable: when the executable does not exist.
+        ProbeTimeout: when the budget expires.
+        ProbeRejected: when the tool exits non-zero.
+    """
+    try:
+        process = subprocess.Popen(
+            command,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.DEVNULL,
+            env={"PATH": os.environ.get("PATH", "/usr/bin:/bin")},
+            start_new_session=True,
+            preexec_fn=_limit_tool_resources,
+        )
+    except FileNotFoundError as error:
+        raise VerificationUnavailable(f"{tool} is not installed") from error
+    try:
+        stdout, _ = process.communicate(timeout=timeout_seconds)
+    except subprocess.TimeoutExpired as error:
+        os.killpg(process.pid, signal.SIGKILL)
+        process.communicate()
+        raise ProbeTimeout(f"{tool} exceeded its time budget") from error
+    if process.returncode != 0:
+        raise ProbeRejected(rejection)
+    return stdout
 
 
 def _audio_report(stdout: bytes) -> ProbeReport:

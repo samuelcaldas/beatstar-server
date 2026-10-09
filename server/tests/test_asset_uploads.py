@@ -44,6 +44,14 @@ class ScriptedProbe:
         return self._report
 
 
+class ScriptedWaveform:
+    """Boundary double for the FFmpeg decoder; the synthetic test files carry no real samples."""
+
+    def generate(self, path: Path, asset_format) -> list[int]:
+        """Returns fixed peaks so that only storage and routing behaviour is under test."""
+        return [0, 128, 255]
+
+
 @pytest.fixture
 async def uploads(tmp_path, monkeypatch):
     """Builds an authenticated client with a private upload root and a scripted probe."""
@@ -61,6 +69,7 @@ async def uploads(tmp_path, monkeypatch):
         asset_limits=limits,
         asset_root=tmp_path / "uploads",
         media_probe=ScriptedProbe(),
+        waveform=ScriptedWaveform(),
     )
     async with app.router.lifespan_context(app):
         await provision_administrator(app.state.admin_session_maker, SECRET, EMAIL, PASSWORD)

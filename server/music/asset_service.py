@@ -7,7 +7,7 @@ from sqlalchemy import func, select
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from server.assets.ingest import AssetIngestor, AssetLimits, MediaProbe
+from server.assets.ingest import AssetIngestor, AssetLimits, MediaProbe, WaveformGenerator
 from server.music.models import Asset, AuditEvent
 from server.music.song_errors import InvalidSongState
 from server.music.song_service import SongLibraryService
@@ -25,12 +25,14 @@ class AssetService:
         session: AsyncSession,
         ingestor: AssetIngestor,
         probe: MediaProbe,
+        waveform: WaveformGenerator | None,
         limits: AssetLimits,
     ) -> None:
         """Binds the service to one session and its collaborators."""
         self._session = session
         self._ingestor = ingestor
         self._probe = probe
+        self._waveform = waveform
         self._limits = limits
 
     async def upload(
@@ -56,7 +58,7 @@ class AssetService:
         if song.status == "archived":
             raise InvalidSongState("Archived songs do not accept new media; restore the song first")
         remaining = self._limits.quota_bytes - await self._stored_bytes()
-        ingested = await self._ingestor.ingest(kind, chunks, remaining, self._probe)
+        ingested = await self._ingestor.ingest(kind, chunks, remaining, self._probe, self._waveform)
         existing = await self._find_in_song(song.id, ingested.storage_key)
         if existing is not None:
             return existing, False

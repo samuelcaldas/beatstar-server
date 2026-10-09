@@ -6,6 +6,7 @@ external verification, then the immutable commit. Anything that fails leaves no 
 
 import asyncio
 import hashlib
+import json
 from collections.abc import AsyncIterator
 from dataclasses import dataclass
 from pathlib import Path
@@ -49,6 +50,7 @@ class AssetLimits:
     quota_bytes: int = 5 * 1024 * 1024 * 1024
     max_audio_seconds: int = 600
     max_artwork_pixels: int = 4096 * 4096
+    staging_max_age_seconds: int = 3600
 
     def bytes_for(self, kind: str) -> int:
         """Returns the per-file byte limit for the kind."""
@@ -69,6 +71,13 @@ class MediaProbe(Protocol):
 
     def inspect(self, path: Path, asset_format: AssetFormat) -> ProbeReport:
         """Returns the report or raises ProbeRejected or ProbeTimeout."""
+
+
+class WaveformGenerator(Protocol):
+    """Strategy for deriving a waveform preview from a verified audio file."""
+
+    def generate(self, path: Path, asset_format: AssetFormat) -> list[int]:
+        """Returns peak amplitudes in 0..255, or raises ProbeRejected or VerificationUnavailable."""
 
 
 class UnavailableProbe:
@@ -114,27 +123,40 @@ class AssetIngestor:
         chunks: AsyncIterator[bytes],
         remaining_quota: int,
         probe: MediaProbe,
+        waveform: WaveformGenerator | None,
     ) -> IngestedObject:
         """Streams, verifies and commits one upload; staged bytes are always removed on failure.
+
+        Audio requires a waveform generator: without one the upload is refused rather than
+        stored without the preview it promises.
 
         Args:
             kind: AUDIO or ARTWORK.
             chunks: The request body as an async byte iterator.
             remaining_quota: Bytes still available under the total quota.
             probe: Verifier used after sniffing and before commit.
+            waveform: Peak generator used for audio; ignored for artwork.
 
         Raises:
             UnsupportedFormat, AssetTooLarge, QuotaExceeded, ProbeRejected, ProbeTimeout,
-            ConflictingObject: each refusal leaves nothing behind.
+            VerificationUnavailable, ConflictingObject: each refusal leaves nothing behind.
         """
         staged = self._storage.new_staging_path()
+        staged_preview: Path | None = None
         try:
             digest, size, asset_format = await self._stream(kind, chunks, staged, remaining_quota)
             report = await asyncio.to_thread(probe.inspect, staged, asset_format)
             self._verify_bounds(kind, report)
+            peaks = await self._peaks(kind, staged, asset_format, waveform)
             self._storage.commit(staged, digest, asset_format.extension)
+            if peaks is not None:
+                staged_preview = self._storage.new_staging_path()
+                staged_preview.write_bytes(_preview_payload(peaks))
+                self._storage.commit_preview(staged_preview, digest)
         finally:
             self._storage.discard(staged)
+            if staged_preview is not None:
+                self._storage.discard(staged_preview)
         return IngestedObject(
             sha256=digest,
             byte_size=size,
@@ -181,6 +203,24 @@ class AssetIngestor:
             raise UnsupportedFormat(kind)
         return asset_format
 
+    async def _peaks(
+        self,
+        kind: str,
+        staged: Path,
+        asset_format: AssetFormat,
+        waveform: WaveformGenerator | None,
+    ) -> list[int] | None:
+        """Returns waveform peaks for audio; None for artwork.
+
+        Raises:
+            VerificationUnavailable: when audio has no generator configured.
+        """
+        if kind != AUDIO:
+            return None
+        if waveform is None:
+            raise VerificationUnavailable("No waveform generator is configured")
+        return await asyncio.to_thread(waveform.generate, staged, asset_format)
+
     def _verify_bounds(self, kind: str, report: ProbeReport) -> None:
         """Applies the media bounds to the verifier's report.
 
@@ -197,6 +237,11 @@ class AssetIngestor:
                 raise ProbeRejected("Artwork has no readable dimensions")
             if report.width * report.height > self._limits.max_artwork_pixels:
                 raise ProbeRejected("Artwork exceeds the maximum pixel count")
+
+
+def _preview_payload(peaks: list[int]) -> bytes:
+    """Serialises peaks as a versioned, self-describing JSON document."""
+    return json.dumps({"version": 1, "bins": len(peaks), "peaks": peaks}, separators=(",", ":")).encode()
 
 
 def _milliseconds(seconds: float | None) -> int | None:

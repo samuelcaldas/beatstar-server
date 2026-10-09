@@ -24,8 +24,9 @@ from server.gameplay.router import build_gameplay_router
 from server.gameplay.service import GameplayService
 from server.gateway.dispatcher import GatewayDispatcher
 from server.assets.client_adapters import SOURCE_ONLY, ClientAdapterFactory
-from server.assets.ingest import AssetLimits, MediaProbe
+from server.assets.ingest import AssetLimits, MediaProbe, WaveformGenerator
 from server.assets.probes import default_media_probe
+from server.assets.waveform import FfmpegWaveform
 from server.assets.storage import AssetStorage
 from server.music.asset_router import register_asset_error_handlers
 from server.music.song_router import register_song_error_handlers
@@ -75,6 +76,7 @@ def create_app(
     asset_limits: AssetLimits | None = None,
     asset_root: Path | None = None,
     media_probe: MediaProbe | None = None,
+    waveform: WaveformGenerator | None = None,
 ) -> FastAPI:
     """Builds an application whose routes and lifespan use one injected database.
 
@@ -97,11 +99,17 @@ def create_app(
     admin_engine = create_admin_engine(resolved_path)
     admin_session_maker = create_admin_session_maker(admin_engine)
 
+    swept_storage: AssetStorage | None = None
+
     @asynccontextmanager
     async def lifespan(app: FastAPI):
-        """Initializes legacy tables, applies migrations, and disposes the admin engine on exit."""
+        """Initializes legacy tables, applies migrations, sweeps abandoned uploads, and disposes the admin engine on exit."""
         await database.initialize()
         await asyncio.to_thread(upgrade_to_head, resolved_path)
+        if swept_storage is not None:
+            await asyncio.to_thread(
+                swept_storage.sweep_stale_staging, app.state.asset_limits.staging_max_age_seconds
+            )
         yield
         await admin_engine.dispose()
 
@@ -120,7 +128,9 @@ def create_app(
         app.state.asset_limits = asset_limits or AssetLimits()
         app.state.asset_storage = AssetStorage(asset_root or settings.asset_storage_root / "uploads")
         app.state.media_probe = media_probe or default_media_probe()
+        app.state.waveform_generator = waveform or FfmpegWaveform()
         app.state.client_adapter = ClientAdapterFactory.default().create(SOURCE_ONLY)
+        swept_storage = app.state.asset_storage
     app.include_router(core_router)
     app.include_router(
         build_commerce_router(CommerceService(), repository),
