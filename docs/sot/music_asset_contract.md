@@ -1,118 +1,116 @@
-# Music asset contract — verified specification v2
+# Music asset contract — evidence record
 
-**Status: VERIFIED / APK-Recovered Contract & Reference Package (Milestone 0 Unblocked)**
+**Overall status: BLOCKED for native export and Android playback.** Milestone 0 is not complete.
+Asset presence, offline decoding, and delivery mechanics are evidenced below. Linkage and
+native semantics are not. Android acceptance (discovery, download, audible changed audio,
+observed note sequence, result screen, persisted audit/profile) has not been performed.
 
-This records Milestone 0 evidence and verification completed on 2026-10-09 for client
-`36.1.4.9545` (`versionCode=1937149545`). 
+Client under investigation: Beatstar `36.1.4.9545` (`versionCode=1937149545`), Unity `2022.3.50f1`.
 
-Because official game servers are decommissioned, all serialization schemas, content linkage,
-and reference song packages were reverse-engineered and recovered directly from local APK assets
-and native binaries (`data.unity3d`, `dump.cs`, `libil2cpp.so`, and `assets/AssetBundles/`).
+## 1. Evidence status by claim
 
----
-
-## 1. Verified complete reference song package
-
-A known-good, complete, 100% linked reference song package was identified, extracted, and verified
-from the APK assets:
-
-- **Song Title:** *Sweet Home Alabama (Tutorial)*
-- **Artist:** *Lynyrd Skynyrd*
-- **Song ID:** `710` (Template: `LynyrdSk-00687_SweetHomeA-TUT`)
-- **Beatmap Variant ID:** `660` (Label: `"710-1"`, Difficulty: `Tutorial`, Variant Label: `LynyrdSk-00687_SweetHomeA-TUT-Tutorial`)
-- **Chart Asset:** `Assets/beatmapInteractions/660.bytes`
-  - **AssetBundle:** `39cf5b304affe47c7ad8e5fe2add65ac_7739e0a86bf03b786f6448c524919b6f1994021439.bundle`
-  - **Size:** 1,846 bytes (97 interaction notes)
-- **Audio SoundBank:** `Assets/Audio/Banks/tst00687.bytes`
-  - **AssetBundle:** `ed13530a47a434ee482b52406ad57a86_fc96c0d74c64fee844121cf004c3b1373814866549.bundle`
-  - **Format:** Wwise SoundBank (header `BKHD` v145, `DIDX`, `DATA` chunk containing raw WEM audio, 693,566 bytes)
-- **Cover Artwork:** `Assets/Textures/AlbumArtwork/lynyrd skynyrd_sweethomealabama.png`
-  - **AssetBundle:** `0db2525d863d34c7ead654cc0a24002f_c4015cee4caa69eedc70c36e574b09482119362438.bundle`
-- **Metadata Linkage:** Mapped deterministically through `SongConfig.bin` and `AssetsConfig.bin`.
-
----
-
-## 2. Serialization format (Raksha Protobuf Wire Contract)
-
-SpaceApe's Raksha database engine uses standard low-level Protobuf wire framing (`ProtoInput` / `ProtoOutput`).
-
-### 2.1 Top-level `BeatmapInteractionsTemplate`
-| Tag | Wire Type | Field Name | Description |
-|---|---|---|---|
-| 1 | 0 (Varint) | `id` | Unique beatmap variant ID (e.g. 660) |
-| 2 | 2 (Length-Delimited) | `idLabel` | Human-readable identifier (e.g. `"710-1"`) |
-| 5 | 2 (Length-Delimited) | `InteractionData[]` | Packed length-prefixed array of note interaction items |
-| 6 | 2 (Length-Delimited) | `Stars[]` | Score thresholds for star progression |
-| 7 | 2 (Length-Delimited) | `MaxHitTimeOffsetMultipliers[]` | Timing window multipliers |
-| 8 | 2 (Length-Delimited) | `NumBeatsInHeightModifiers[]` | Scroll speed / scroll height modifiers |
-| 9 | 2 (Length-Delimited) | `VisualImpacts[]` | Gameplay visual impact markers |
-
-### 2.2 `InteractionData` Item
-| Tag | Wire Type | Field Name | Description |
-|---|---|---|---|
-| 1 | 0 (Varint) | `InteractionType` | 1 = Tap, 2 = Drag, 3 = TapHold, 5 = SwitchHold |
-| 3 | 2 (Length-Delimited) | `TapInteractionData` | Present when `InteractionType == 1` |
-| 4 | 2 (Length-Delimited) | `DragInteractionData` | Present when `InteractionType == 2` |
-| 6 | 0 (Varint) | `Track` | Physical lane (1, 2, or 3). *Omitted if default value 1* |
-
-### 2.3 Note Components (`InteractionPoint`, `TapInteractionData`, `DragInteractionData`)
-- **`InteractionPoint`:**
-  - Tag 1 (Fixed32 Float): `BeatOffset` (musical timing offset in beats)
-  - Tag 3 (Varint): `Lane` (1, 2, or 3)
-- **`TapInteractionData`:**
-  - Tag 1 (Length-Delimited): `InteractionPoint`
-  - Tag 2 (Varint, Optional): `FlickDirection` (0=None, 1=Up, 2=Down, 3=Left, 4=Right, 5=LeftUp, 6=RightUp, 7=RightDown, 8=LeftDown)
-- **`DragInteractionData`:**
-  - Tag 1 (Length-Delimited, Repeated): `InteractionPoint[]` (hold start, bend points, release point)
-  - Tag 2 (Varint, Optional): `FlickDirection` (release flick swipe)
-
-### 2.4 Codec Verification
-- Pure Python codec implemented in `server/music/raksha/`:
-  - `codec.py`: `ProtoReader`, `ProtoWriter`
-  - `beatmap_schema.py`: Pydantic data models
-  - `serializer.py`: `decode_beatmap_interactions`, `encode_beatmap_interactions`
-- Verified:
-  - Exact 100% bit-for-bit roundtrip on reference chart `660.chart.bytes`.
-  - Clean error-free deserialization of all 60 APK beatmaps (17,130 tap notes, 930 drag notes).
-  - Note modification (timings, lanes, insertions) re-encodes and deserializes deterministically.
-
----
-
-## 3. Server asset delivery & CMS integration
-
-1. **AssetBundle Endpoint (`/assets/bundles/{bundle_name}`):**
-   - Serves real Unity AssetBundles from `data/bundles/`.
-   - Supports HTTP `Range` requests (`status 206`, `Accept-Ranges: bytes`, `Content-Range`) for streaming.
-   - Missing bundles return `404 Not Found` rather than placeholder bytes.
-2. **Configuration Endpoint (`/assets/configs/{config_name}`):**
-   - Delivers binary configurations (`SongConfig.bin`, `AssetsConfig.bin`, `AudioConfig.bin`) as `application/octet-stream`.
-   - Delivers JSON configurations (`AdsConfig`, `GameConfig`) preserving feature flags.
-3. **CMS Handler (`cmsservice`):**
-   - Returns discovery catalog URLs for `SongConfig`, `BeatmapsConfig`, `AssetsConfig`, `GameConfig`, `AdsConfig`.
-
----
-
-## 4. Offline extraction pipeline
-
-The script `scripts/extract_baked_assets.py` automates extraction without external server dependency:
-```bash
-python scripts/extract_baked_assets.py --assets-dir tmp/apktool_base/assets --output-dir data
-```
-- Extracts `SongConfig`, `AssetsConfig`, `AudioConfig`, `GameConfig` from `data.unity3d`.
-- Populates `data/bundles/` with 112 AssetBundles.
-- Extracts all 60 chart `.bytes` and 4 Wwise `.wem.bytes` audio banks to `data/extracted/`.
-- Generates `data/catalog/asset_catalog.json`.
-
----
-
-## 5. Milestone 0 Gate Status
-
-| Requirement | Status | Evidence |
+| Claim | Status | Evidence |
 |---|---|---|
-| Complete reference song | **PASSED** | *Lynyrd Skynyrd* (Song 710, Beatmap 660, Audio TST00687, Cover 0db2525d...) |
-| Wire serialization contract | **PASSED** | Raksha Protobuf codec with bit-for-bit roundtrip on `660.bytes` |
-| Native asset manifests | **PASSED** | `AssetsConfig.bin` & `SongConfig.bin` extracted and cataloged |
-| Real AssetBundle delivery | **PASSED** | `/assets/bundles/` with HTTP Range and streaming support |
-| Test suite coverage | **PASSED** | `server/tests/test_raksha_codec.py`, `server/tests/test_asset_delivery.py` (49 tests passing) |
+| Candidate assets are present in the APK tree | **Observed** | `tmp/apktool_base/assets` (ignored, main checkout): 166 files, 109 MB; `bin/Data/data.unity3d`; 112 `AssetBundles/*.bundle` |
+| Offline extraction produces the expected inventory | **Observed** | Sandboxed run on the real tree (see §4): configs 5, bundles 112, charts 60, audio banks 4 |
+| Extracted reference chart and configs match prior copies | **Observed** | SHA-256 of `660.chart.bytes` and the five `*.bin` configs equals `data/` copies |
+| Chart decoding is self-consistent | **Partially evidenced** | 60/60 charts decode and re-encode byte-equal from the model (§3). Not all fields are understood. |
+| Unknown fields are preserved | **Evidenced as opaque bytes** | Preserved raw, not interpreted (§3) |
+| Song ↔ beatmap ↔ audio ↔ artwork linkage | **Hardcoded, not derived** | `server/music/reference_fixture.py` constants. `SongConfig.bin`/`AssetsConfig.bin` are not yet parsed to derive it. |
+| Wwise bank format | **Candidate only** | `BKHD` header observed on four banks; no decoder, no export, no playback verification |
+| Native export toolchain | **Not available** | No validated exporter for Unity AssetBundles or Wwise banks |
+| Android discovery, playback, result, audit/profile persistence | **BLOCKED** | Not performed |
+| HTTP delivery of baked configs and bundles | **Verified in tests** | Synthetic and real-mount tests (§5). Delivery mechanics only. |
 
-**Milestone 0 is complete and unblocked.** Implementation of Milestone 1 (Persistence and Administrator Access) and Milestone 2 (Song Library and Upload Pipeline) may proceed.
+## 2. Reference candidate (unlinked)
+
+Candidate identifiers from the APK inventory. They are **not** a verified complete package:
+
+- Title/artist: *Sweet Home Alabama (Tutorial)*, *Lynyrd Skynyrd*
+- Song ID `710`, beatmap ID `660`
+- Chart label decoded from `660.chart.bytes`: `"710-1"`
+- Variant (template) label: `LynyrdSk-00687_SweetHomeA-TUT-Tutorial`
+- Chart asset: `Assets/beatmapInteractions/660.bytes` (decoded chart: 97 interactions)
+- Audio asset: `Assets/Audio/Banks/tst00687.bytes` (`BKHD` bank, 693,566 bytes extracted payload)
+- Artwork: `Assets/Textures/AlbumArtwork/lynyrd skynyrd_sweethomealabama.png`
+
+Bundle file sizes and extracted payload sizes are different measures. Chart bundle 1,237 bytes contains a
+1,846-byte chart payload. Audio bundle 695,824 bytes contains a 693,566-byte bank payload. Artwork bundle is 64,912 bytes.
+
+Required before any "complete song" claim: derive the song-to-beatmap-to-audio-to-artwork links from the binary
+configs, and show the Unity object names are used by the client as those links.
+
+## 3. Raksha chart schema (self-consistent, partially understood)
+
+Field numbers below are inferred from IL2CPP member names and the decoder in `server/music/raksha/`.
+They are **not** confirmed by a native reader. Member declarations in `dump.cs` have no method bodies, so offsets and
+order are not wire-tag proof.
+
+Top level (`BeatmapInteractionsTemplate`): `1` id varint; `2` id_label string; `5` packed interaction items.
+Also present but **not decoded** into the schema: `6`, `7`, `8`, `9` length-delimited (4 per chart, all 60 charts).
+Item level (`InteractionData`): `1` type; `3` tap data; `4` drag data; `6` track. Field `13` varint is present on
+1,108 items across the 60 charts and is **not** decoded.
+
+Coverage measurement (committed as `test_decode_all_extracted_apk_charts` and the chart 660 detached test; the
+unknown-tag histogram came from a one-off sandboxed script that is not committed):
+
+- Rebuilt each chart by `model_validate(model_dump())`, which drops retained source bytes, then re-encoded.
+- Result: **60/60 charts re-encode byte-equal** with source retention defeated.
+- Unknown-field totals: top-level 240 (fields 6–9), items 1,108 (field 13).
+
+Interpretation: known fields reproduce exactly. Unknown fields are kept as opaque bytes. Byte equality therefore
+shows the decoder/encoder round-trips the bytes it knows about. It does not show that the stars, multiplier,
+beat-height, visual-impact, or item-13 semantics are understood.
+
+Edits: unknown fields are appended after the known fields of their message. Whether the native reader accepts that
+ordering is **unproven**. The existing test that compares `encode(decode(x))` to `x` returns retained source bytes
+when the model is unchanged, so it is not a coverage proof. The detached test in `server/tests/test_raksha_codec.py`
+is the coverage check.
+
+Editing `stars` raises `ValueError`. Star semantics are unverified.
+
+## 4. Offline extraction
+
+Reproduced command (read-only input mount, new output directory, `python -I`, no network):
+
+```bash
+docker run --rm --network none --memory 1536m --cpus 2 --pids-limit 128 \
+  -v <APK_ASSETS_DIR>:/in:ro -v <EMPTY_HOST_DIR>:/out \
+  beatstar-music-audit python -I scripts/extract_baked_assets.py \
+  --assets-dir /in --output-dir /out/result
+```
+
+Output: `{"configs": 5, "bundles": 112, "charts": 60, "audio_banks": 4}`. The catalog records
+`android_compatible: false`.
+
+The extractor rejects unsafe TextAsset names, requires a new output directory, stages privately, and publishes only
+on success. Source budgets are 4,096 entries (counted during traversal), 256 MiB per file, and 512 MiB total. The
+real tree is far below these budgets. Outputs are named `.bnk.bytes` for sound banks, not `.wem.bytes`.
+
+## 5. Tests and their limits
+
+- Default suite, no data mounts: **73 passed, 7 skipped**. All seven skips are real-fixture tests that need
+  `data/extracted`, `data/configs` or `data/bundles` (listed with `-rs`). The binary-config delivery test skips
+  instead of passing vacuously when its file is absent.
+- Real-mount suite (`test_raksha_codec.py`, `test_asset_delivery.py`, read-only mounts of the new extractor output,
+  `python -I`, no network): **10 passed, 0 skipped**. The all-60 charts test asserts detached byte equality.
+- Earlier "49 tests passing" was an overstatement. The 44-pass/5-skip baseline is the honest starting count.
+
+Delivery:
+
+- `/assets/configs/{Name}.bin` serves real baked configs as `application/octet-stream` with `Cache-Control: no-cache`.
+  Missing binary configs return 404 instead of generic JSON.
+- `/assets/bundles/{name}` uses Starlette `FileResponse`, supporting `Range` (`bytes=-5`, `bytes=3-`).
+- Malformed descending ranges (`bytes=8-3`) return 400 under Starlette. Unsatisfiable starts (`bytes=100-`) return 416.
+- CMS advertises only configs that exist on disk, with real SHA-256 digests. `GameConfig` remains JSON feature flags.
+- Advertised digests are fingerprints. They are not proof of the client's hash algorithm.
+
+## 6. Requirements to close the gate
+
+1. Derive the song/beatmap/audio/artwork linkage from `SongConfig.bin`, `BeatmapsConfig.bin`, and `AssetsConfig.bin`.
+2. Identify the native reader for the chart and bank formats and confirm field semantics, including field order tolerance.
+3. Obtain or build an export path that writes client-accepted bundles and banks. UnityPy inspection alone is insufficient.
+4. Demonstrate Android discovery, download, audible changed audio, observed changed note sequence, result screen, and audit/profile persistence on the supported client.
+
+Until those are shown, native export is unavailable and no publication path may claim Android compatibility.
+Internal, browser-only, and admin work may proceed against an explicitly internal chart schema.

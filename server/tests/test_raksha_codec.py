@@ -57,7 +57,7 @@ def test_reference_chart_660_exact_byte_roundtrip():
     decoded = decode_beatmap_interactions(raw_original)
 
     assert decoded.id == REFERENCE_SONG.beatmap_id
-    assert decoded.id_label == "710-1"
+    assert decoded.id_label == REFERENCE_SONG.chart_id_label
     assert len(decoded.interactions) == 97
 
     # Verify first note semantics
@@ -72,6 +72,20 @@ def test_reference_chart_660_exact_byte_roundtrip():
     re_encoded = encode_beatmap_interactions(decoded)
     assert len(re_encoded) == len(raw_original)
     assert re_encoded == raw_original
+
+
+def test_reference_chart_660_canonical_encoding_without_source_retention():
+    """Validates schema coverage: fields are re-encoded from the model, not the retained source."""
+    chart_path = Path("data/extracted/660.chart.bytes")
+    if not chart_path.exists():
+        pytest.skip("data/extracted/660.chart.bytes not present in test environment")
+
+    raw_original = chart_path.read_bytes()
+    detached = BeatmapInteractionsTemplate.model_validate(
+        decode_beatmap_interactions(raw_original).model_dump()
+    )
+
+    assert encode_beatmap_interactions(detached) == raw_original
 
 
 def test_beatmap_note_modification_and_reencoding():
@@ -128,6 +142,6 @@ def test_decode_all_extracted_apk_charts():
         assert chart.id > 0
         assert len(chart.id_label) > 0
         assert len(chart.interactions) > 0
-        # Re-encode roundtrip check
-        re_encoded = encode_beatmap_interactions(chart)
-        assert len(re_encoded) > 0
+        # Detached copy drops retained source bytes, so equality proves canonical coverage
+        detached = BeatmapInteractionsTemplate.model_validate(chart.model_dump())
+        assert encode_beatmap_interactions(detached) == raw

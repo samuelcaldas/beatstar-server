@@ -20,6 +20,7 @@ def decode_interaction_point(data: bytes) -> InteractionPoint:
     reader = ProtoReader(data)
     point = InteractionPoint()
     while reader.has_more:
+        start_remaining = reader.remaining
         tag_info = reader.read_tag()
         if not tag_info:
             break
@@ -29,8 +30,8 @@ def decode_interaction_point(data: bytes) -> InteractionPoint:
         elif field_num == 3 and wire_type == WireType.VARINT:
             point.lane = reader.read_varint()
         else:
-            reader.skip_field(wire_type)
-    return point
+            point.raw_fields.append(reader.capture_unknown(wire_type, start_remaining))
+    return point.remember(data, encode_interaction_point(point))
 
 
 def encode_interaction_point(point: InteractionPoint) -> bytes:
@@ -38,7 +39,7 @@ def encode_interaction_point(point: InteractionPoint) -> bytes:
     writer = ProtoWriter()
     writer.write_float_field(1, point.beat_offset)
     writer.write_varint_field(3, point.lane)
-    return writer.to_bytes()
+    return point.encode_preserved(writer.to_bytes())
 
 
 def decode_tap_interaction(data: bytes) -> TapInteractionData:
@@ -46,6 +47,7 @@ def decode_tap_interaction(data: bytes) -> TapInteractionData:
     reader = ProtoReader(data)
     tap = TapInteractionData()
     while reader.has_more:
+        start_remaining = reader.remaining
         tag_info = reader.read_tag()
         if not tag_info:
             break
@@ -55,8 +57,8 @@ def decode_tap_interaction(data: bytes) -> TapInteractionData:
         elif field_num == 2 and wire_type == WireType.VARINT:
             tap.flick = FlickDirection(reader.read_varint())
         else:
-            reader.skip_field(wire_type)
-    return tap
+            tap.raw_fields.append(reader.capture_unknown(wire_type, start_remaining))
+    return tap.remember(data, encode_tap_interaction(tap))
 
 
 def encode_tap_interaction(tap: TapInteractionData) -> bytes:
@@ -65,7 +67,7 @@ def encode_tap_interaction(tap: TapInteractionData) -> bytes:
     writer.write_bytes_field(1, encode_interaction_point(tap.point))
     if tap.flick != FlickDirection.NONE:
         writer.write_varint_field(2, int(tap.flick))
-    return writer.to_bytes()
+    return tap.encode_preserved(writer.to_bytes())
 
 
 def decode_drag_interaction(data: bytes) -> DragInteractionData:
@@ -73,6 +75,7 @@ def decode_drag_interaction(data: bytes) -> DragInteractionData:
     reader = ProtoReader(data)
     drag = DragInteractionData()
     while reader.has_more:
+        start_remaining = reader.remaining
         tag_info = reader.read_tag()
         if not tag_info:
             break
@@ -82,8 +85,8 @@ def decode_drag_interaction(data: bytes) -> DragInteractionData:
         elif field_num == 2 and wire_type == WireType.VARINT:
             drag.flick = FlickDirection(reader.read_varint())
         else:
-            reader.skip_field(wire_type)
-    return drag
+            drag.raw_fields.append(reader.capture_unknown(wire_type, start_remaining))
+    return drag.remember(data, encode_drag_interaction(drag))
 
 
 def encode_drag_interaction(drag: DragInteractionData) -> bytes:
@@ -93,7 +96,7 @@ def encode_drag_interaction(drag: DragInteractionData) -> bytes:
         writer.write_bytes_field(1, encode_interaction_point(pt))
     if drag.flick != FlickDirection.NONE:
         writer.write_varint_field(2, int(drag.flick))
-    return writer.to_bytes()
+    return drag.encode_preserved(writer.to_bytes())
 
 
 def decode_interaction_item(data: bytes) -> InteractionData:
@@ -101,6 +104,7 @@ def decode_interaction_item(data: bytes) -> InteractionData:
     reader = ProtoReader(data)
     item = InteractionData()
     while reader.has_more:
+        start_remaining = reader.remaining
         tag_info = reader.read_tag()
         if not tag_info:
             break
@@ -114,8 +118,8 @@ def decode_interaction_item(data: bytes) -> InteractionData:
         elif field_num == 6 and wire_type == WireType.VARINT:
             item.track = reader.read_varint()
         else:
-            reader.skip_field(wire_type)
-    return item
+            item.raw_fields.append(reader.capture_unknown(wire_type, start_remaining))
+    return item.remember(data, encode_interaction_item(item))
 
 
 def encode_interaction_item(item: InteractionData) -> bytes:
@@ -126,9 +130,11 @@ def encode_interaction_item(item: InteractionData) -> bytes:
         writer.write_bytes_field(3, encode_tap_interaction(item.tap_data))
     elif item.drag_data:
         writer.write_bytes_field(4, encode_drag_interaction(item.drag_data))
+    if item.raw_extra:
+        raise ValueError("Use preserved raw_fields for unsupported interaction tags")
     if item.track != 1:
         writer.write_varint_field(6, item.track)
-    return writer.to_bytes()
+    return item.encode_preserved(writer.to_bytes())
 
 
 def decode_beatmap_interactions(data: bytes) -> BeatmapInteractionsTemplate:
@@ -137,6 +143,7 @@ def decode_beatmap_interactions(data: bytes) -> BeatmapInteractionsTemplate:
     template = BeatmapInteractionsTemplate()
 
     while reader.has_more:
+        start_remaining = reader.remaining
         tag_info = reader.read_tag()
         if not tag_info:
             break
@@ -151,24 +158,18 @@ def decode_beatmap_interactions(data: bytes) -> BeatmapInteractionsTemplate:
             packed_bytes = reader.read_bytes()
             sub_reader = ProtoReader(packed_bytes)
             while sub_reader.has_more:
-                item_len = sub_reader.read_varint()
-                if item_len > sub_reader.remaining:
-                    break
-                item_bytes = sub_reader.read_bytes() if hasattr(sub_reader, "_dummy") else sub_reader._data[sub_reader._pos : sub_reader._pos + item_len]
-                sub_reader._pos += item_len
+                item_bytes = sub_reader.read_bytes()
                 template.interactions.append(decode_interaction_item(item_bytes))
         else:
-            # Preserve trailing sections (Stars, multipliers, visual impacts)
-            if wire_type == WireType.LENGTH_DELIMITED:
-                template.raw_trailing_tags[field_num] = reader.read_bytes()
-            else:
-                reader.skip_field(wire_type)
+            template.raw_fields.append(reader.capture_unknown(wire_type, start_remaining))
 
-    return template
+    return template.remember(data, encode_beatmap_interactions(template))
 
 
 def encode_beatmap_interactions(template: BeatmapInteractionsTemplate) -> bytes:
     """Encodes a BeatmapInteractionsTemplate into binary .bytes format."""
+    if template.stars:
+        raise ValueError("Star editing is unverified; preserve the opaque source section")
     writer = ProtoWriter()
     writer.write_varint_field(1, template.id)
     writer.write_string_field(2, template.id_label)
@@ -178,7 +179,7 @@ def encode_beatmap_interactions(template: BeatmapInteractionsTemplate) -> bytes:
     for item in template.interactions:
         item_bytes = encode_interaction_item(item)
         packed_writer.write_varint(len(item_bytes))
-        packed_writer._buf.extend(item_bytes)
+        packed_writer.write_raw(item_bytes)
 
     writer.write_bytes_field(5, packed_writer.to_bytes())
 
@@ -186,4 +187,4 @@ def encode_beatmap_interactions(template: BeatmapInteractionsTemplate) -> bytes:
     for tag_num, raw_bytes in template.raw_trailing_tags.items():
         writer.write_bytes_field(tag_num, raw_bytes)
 
-    return writer.to_bytes()
+    return template.encode_preserved(writer.to_bytes())

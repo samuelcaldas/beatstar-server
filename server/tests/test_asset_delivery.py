@@ -67,22 +67,28 @@ async def test_bundle_endpoint_nonexistent_returns_404():
 @pytest.mark.asyncio
 async def test_binary_config_delivery():
     """Validates binary delivery of baked configurations (SongConfig, AssetsConfig)."""
+    if not Path("data/configs/SongConfig.bin").exists():
+        pytest.skip("data/configs/SongConfig.bin not present in test environment")
     async with AsyncClient(
         transport=ASGITransport(app=app), base_url="http://test"
     ) as client:
         response = await client.get("/assets/configs/SongConfig.bin")
-        if Path("data/configs/SongConfig.bin").exists():
-            assert response.status_code == 200
-            assert response.headers["content-type"] == "application/octet-stream"
-            assert len(response.content) == 845233
+        assert response.status_code == 200
+        assert response.headers["content-type"] == "application/octet-stream"
+        assert len(response.content) == 845233
 
 
 @pytest.mark.asyncio
-async def test_cms_handler_includes_music_catalogs():
+async def test_cms_handler_includes_music_catalogs(tmp_path, monkeypatch):
     """Validates cmsservice returns URLs for SongConfig, BeatmapsConfig and AssetsConfig."""
     from server.handlers.cms_handler import CMSHandler
     from server.models.headers import ClientHeader
 
+    monkeypatch.chdir(tmp_path)
+    config_directory = tmp_path / "data/configs"
+    config_directory.mkdir(parents=True)
+    for name in ("SongConfig", "BeatmapsConfig", "AssetsConfig"):
+        (config_directory / f"{name}.bin").write_bytes(b"synthetic-config")
     handler = CMSHandler()
     header = ClientHeader(session_id="test", player_id="test", timestamp=123)
     result = await handler.handle(header, {})
