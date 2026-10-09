@@ -4,6 +4,10 @@ pydantic>=2.9.0
 pydantic-settings>=2.5.0
 aiofiles>=24.1.0
 aiosqlite>=0.20.0
+sqlalchemy[asyncio]>=2.0,<2.1
+alembic==1.20.0
+fastapi-users==15.0.5
+fastapi-users-db-sqlalchemy==7.0.0
 cryptography>=43.0.0
 requests>=2.32.0
 unitypy==1.25.4

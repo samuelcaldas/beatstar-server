@@ -2,8 +2,12 @@
 
 from __future__ import annotations
 
+from contextlib import asynccontextmanager
 from pathlib import Path
+from typing import AsyncIterator
 import aiosqlite
+
+BUSY_TIMEOUT_MILLISECONDS = 5000
 
 
 class DatabaseManager:
@@ -66,10 +70,17 @@ class DatabaseManager:
         """Creates tables if not already present."""
         path = Path(self.db_path)
         path.parent.mkdir(parents=True, exist_ok=True)
-        async with aiosqlite.connect(self.db_path) as db:
+        async with self.connect() as db:
             await self._create_tables(db)
             await db.commit()
 
-    def connect(self):
-        """Returns an async context manager for SQLite connection."""
-        return aiosqlite.connect(self.db_path)
+    @asynccontextmanager
+    async def connect(self) -> AsyncIterator[aiosqlite.Connection]:
+        """Yields a connection with foreign keys enforced and a bounded busy timeout.
+
+        The pragmas are per-connection in SQLite, so every caller must go through here.
+        """
+        async with aiosqlite.connect(self.db_path) as db:
+            await db.execute("PRAGMA foreign_keys = ON")
+            await db.execute(f"PRAGMA busy_timeout = {BUSY_TIMEOUT_MILLISECONDS}")
+            yield db
