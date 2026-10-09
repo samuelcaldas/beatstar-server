@@ -11,6 +11,7 @@ Este diretório contém a documentação técnica, especificações de protocolo
 - [02_beatstar_tools.md](file:///home/samuelcaldas/repos/beatstar/docs/references/02_beatstar_tools.md) - Análise do repositório `DavidBuchanan314/beatstar-tools`: enquadramento binário de pacotes do `SocketGateway`, parser Protobuf/Raksha, `userservice` e `cmsservice`.
 
 ### 2. Fontes de Verdade (`docs/sot/`)
+- [music_asset_contract.md](sot/music_asset_contract.md) - Investigação v1 dos assets musicais, inventário reproduzível e bloqueios explícitos: exportação e reprodução Android ainda não verificadas.
 - [protocol_specification.md](file:///home/samuelcaldas/repos/beatstar/docs/sot/protocol_specification.md) - Especificação completa do protocolo SpaceApe Sharpla e SocketGateway.
 - [decompilation_guide.md](file:///home/samuelcaldas/repos/beatstar/docs/sot/decompilation_guide.md) - Manual de extração de assets, IL2CPP dump e descompilação C#/Java.
 - [client_patching_guide.md](file:///home/samuelcaldas/repos/beatstar/docs/sot/client_patching_guide.md) - Instruções para patch de APK e injeção de hooks para conexão do cliente ao servidor privado.
