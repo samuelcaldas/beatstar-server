@@ -86,6 +86,13 @@ with the Nginx reverse proxy; NPM configuration is applied manually.
   a disposable container without the development data mount. Handler
   tests use temporary databases; wire tests primarily exercise helpers.
 
+## Music authoring status
+
+Read docs/sot/music_asset_contract.md before music/export work: native playback and export remain unverified; the administration UI is not implemented.
+Run scripts/inspect_music_assets.py only with python -I in the documented restricted docker-dev container; exit 1 can mean missing type trees, never compatibility.
+Run server/tests/test_music_inspection.py for inventory boundary tests; the full existing suite remains required.
+.dockerignore allows only server/scripts/build inputs; explicitly allow future frontend build inputs when adding that stage.
+
 ## Reverse-engineering pipeline
 
 scripts/decompile.py extracts APKM contents and Unity IL2CPP inputs, runs

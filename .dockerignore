@@ -1,0 +1,18 @@
+# Only deliberate application inputs enter images.
+*
+!Dockerfile
+!requirements.txt
+!pyproject.toml
+!server/
+!server/**
+!scripts/
+!scripts/**
+# Local state must never override application configuration in an image.
+**/__pycache__/
+**/*.py[cod]
+**/.env
+**/.env.*
+**/*.db
+**/*.sqlite
+**/*.sqlite3
+**/.playwright-mcp/
