@@ -18,6 +18,7 @@ from server.storage.database import DatabaseManager
 # Configuração de timezone America/Sao_Paulo
 os.environ["TZ"] = settings.timezone
 from server.commerce.router import commerce_router
+from server.gameplay.router import gameplay_router
 
 TIMEZONE = zoneinfo.ZoneInfo(settings.timezone)
 
@@ -40,8 +41,10 @@ app = FastAPI(
 )
 
 app.include_router(commerce_router, prefix="/api/commerce", tags=["commerce"])
+app.include_router(gameplay_router, prefix="/api/gameplay", tags=["gameplay"])
 
 app.add_middleware(
+
     CORSMiddleware,
     allow_origins=["*"],
     allow_credentials=True,

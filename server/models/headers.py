@@ -14,6 +14,7 @@ class ClientHeader(BaseModel):
 
     version: str = Field(default="36.1.4.9545")
     service: str = Field(default="userservice")
+    command: Optional[str] = Field(default=None)
     rpcthing: str = Field(default="")
     authentication_ticket: Optional[str] = Field(
         default=None, alias="authenticationTicket"
@@ -21,6 +22,7 @@ class ClientHeader(BaseModel):
     clide: Optional[str] = Field(default=None)
     supports_compression: bool = Field(default=True, alias="supportsCompression")
     ignore_maintenance: bool = Field(default=False, alias="ignoreMaintenance")
+
 
 
 class ServerHeader(BaseModel):
