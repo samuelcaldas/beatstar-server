@@ -78,5 +78,18 @@ Il2Cpp.perform(() => {
         console.log("[!] AssetBundleDownloader não hookado:", err);
     }
 
+    // 5. Controle de Feature Flag de Anúncios (VideoAdsEnabled)
+    try {
+        const appAssembly = Il2Cpp.domain.assembly("Assembly-CSharp").image;
+        const featureFlags = appAssembly.class("FeatureFlags");
+        featureFlags.method("get_VideoAdsEnabled").implementation = function () {
+            return false;
+        };
+        console.log("[✓] Hook em FeatureFlags.get_VideoAdsEnabled aplicado (Ads Disabled)!");
+    } catch (err) {
+        // FeatureFlags gerenciado pelo servidor CMS
+    }
+
     console.log("[✓] Todos os hooks do Beatstar Private Server estão ativos!");
 });
+

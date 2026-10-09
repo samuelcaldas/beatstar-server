@@ -47,5 +47,23 @@ class ServerSettings(BaseSettings):
         alias="SESSION_EXPIRATION_HOURS",
     )
 
+    # Feature Flags & Monetização (Google Ads / AdMob)
+    feature_flag_google_ads_enabled: bool = Field(
+        default=False,
+        alias="FEATURE_FLAG_GOOGLE_ADS_ENABLED",
+    )
+    google_ads_app_id: str = Field(
+        default="ca-app-pub-3940256099942544~3347511713",
+        alias="GOOGLE_ADS_APP_ID",
+    )
+    google_ads_rewarded_unit_id: str = Field(
+        default="ca-app-pub-3940256099942544/5224354917",
+        alias="GOOGLE_ADS_REWARDED_UNIT_ID",
+    )
+    google_ads_interstitial_unit_id: str = Field(
+        default="ca-app-pub-3940256099942544/1033173712",
+        alias="GOOGLE_ADS_INTERSTITIAL_UNIT_ID",
+    )
+
 
 settings = ServerSettings()

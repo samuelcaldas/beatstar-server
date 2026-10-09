@@ -24,6 +24,7 @@ class CMSHandler(BaseServiceHandler):
         "LiveOpsBundleConfig",
         "LiveOpsDeeplinkRewardConfig",
         "MusicKitConfig",
+        "AdsConfig",
     ]
 
     async def handle(

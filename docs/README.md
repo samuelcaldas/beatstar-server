@@ -14,6 +14,7 @@ Este diretório contém a documentação técnica, especificações de protocolo
 - [protocol_specification.md](file:///home/samuelcaldas/repos/beatstar/docs/sot/protocol_specification.md) - Especificação completa do protocolo SpaceApe Sharpla e SocketGateway.
 - [decompilation_guide.md](file:///home/samuelcaldas/repos/beatstar/docs/sot/decompilation_guide.md) - Manual de extração de assets, IL2CPP dump e descompilação C#/Java.
 - [client_patching_guide.md](file:///home/samuelcaldas/repos/beatstar/docs/sot/client_patching_guide.md) - Instruções para patch de APK e injeção de hooks para conexão do cliente ao servidor privado.
+- [ads_and_monetization_guide.md](file:///home/samuelcaldas/repos/beatstar/docs/sot/ads_and_monetization_guide.md) - Guia de configuração de Feature Flag e injeção de conta personalizada do Google Ads / AdMob & AppLovin.
 
 ### 3. Decisões Arquiteturais (`docs/adr/`)
 - [0001-decompilation-and-server-architecture.md](file:///home/samuelcaldas/repos/beatstar/docs/adr/0001-decompilation-and-server-architecture.md) - Decisão arquitetural de ferramentas de descompilação e stack do servidor privado em Python (FastAPI).
