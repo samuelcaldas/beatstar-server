@@ -20,6 +20,7 @@ from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker
 from server.admin.models import AdministratorSession, AdministratorUser
 from server.admin.settings import AdminAuthSettings
 from server.admin.throttle import LoginAttemptLimiter
+from server.music.asset_router import build_asset_router
 from server.music.song_router import build_song_library_router
 
 SESSION_COOKIE = "beatstar_admin"
@@ -173,6 +174,13 @@ def build_admin_router(
 
     router.include_router(
         build_song_library_router(
+            get_session,
+            users.current_user(active=True, superuser=True),
+            require_csrf,
+        )
+    )
+    router.include_router(
+        build_asset_router(
             get_session,
             users.current_user(active=True, superuser=True),
             require_csrf,

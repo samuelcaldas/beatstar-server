@@ -55,7 +55,7 @@ class Asset(Base):
     __tablename__ = "assets"
     __table_args__ = (
         CheckConstraint("kind IN ('audio', 'artwork')", name="ck_assets_kind"),
-        UniqueConstraint("storage_key", name="uq_assets_storage_key"),
+        UniqueConstraint("song_id", "storage_key", name="uq_assets_song_storage_key"),
     )
 
     id: Mapped[str] = mapped_column(String(36), primary_key=True, default=new_identifier)
@@ -67,6 +67,9 @@ class Asset(Base):
     sha256: Mapped[str] = mapped_column(String(64), nullable=False)
     byte_size: Mapped[int] = mapped_column(Integer, nullable=False)
     content_type: Mapped[str] = mapped_column(String(100), nullable=False)
+    duration_milliseconds: Mapped[int | None] = mapped_column(Integer, nullable=True)
+    width: Mapped[int | None] = mapped_column(Integer, nullable=True)
+    height: Mapped[int | None] = mapped_column(Integer, nullable=True)
     created_at: Mapped[int] = mapped_column(Integer, nullable=False, default=now_milliseconds)
 
 

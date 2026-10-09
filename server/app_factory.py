@@ -10,6 +10,7 @@ from __future__ import annotations
 import asyncio
 import os
 from contextlib import asynccontextmanager
+from pathlib import Path
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from server.admin.auth import build_admin_router
@@ -22,6 +23,10 @@ from server.config import ServerSettings, settings
 from server.gameplay.router import build_gameplay_router
 from server.gameplay.service import GameplayService
 from server.gateway.dispatcher import GatewayDispatcher
+from server.assets.client_adapters import SOURCE_ONLY, ClientAdapterFactory
+from server.assets.ingest import AssetLimits, MediaProbe, UnavailableProbe
+from server.assets.storage import AssetStorage
+from server.music.asset_router import register_asset_error_handlers
 from server.music.song_router import register_song_error_handlers
 from server.storage.database import DatabaseManager
 from server.storage.migrations.runner import upgrade_to_head
@@ -66,6 +71,9 @@ def create_app(
     database_path: str | None = None,
     admin_settings: AdminAuthSettings | None = None,
     cors_origins: list[str] | None = None,
+    asset_limits: AssetLimits | None = None,
+    asset_root: Path | None = None,
+    media_probe: MediaProbe | None = None,
 ) -> FastAPI:
     """Builds an application whose routes and lifespan use one injected database.
 
@@ -106,6 +114,12 @@ def create_app(
     app.state.dispatcher = dispatcher
     app.state.admin_session_maker = admin_session_maker
     register_song_error_handlers(app)
+    register_asset_error_handlers(app)
+    if resolved_admin is not None:
+        app.state.asset_limits = asset_limits or AssetLimits()
+        app.state.asset_storage = AssetStorage(asset_root or settings.asset_storage_root / "uploads")
+        app.state.media_probe = media_probe or UnavailableProbe()
+        app.state.client_adapter = ClientAdapterFactory.default().create(SOURCE_ONLY)
     app.include_router(core_router)
     app.include_router(
         build_commerce_router(CommerceService(), repository),
