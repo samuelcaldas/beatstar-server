@@ -1,25 +1,18 @@
-"""Low-level Raksha Protobuf wire codec for SpaceApe binary protocols."""
-
+"""Bounded Raksha/Protobuf wire primitives; invalid input raises ValueError."""
 from __future__ import annotations
-
 import struct
-from typing import Any
 
 
 class WireType:
-    """Protobuf wire type constants matching SpaceApe WireType enum."""
-
+    """Supported Protobuf wire types (groups are deliberately unsupported)."""
     VARINT = 0
     FIXED64 = 1
     LENGTH_DELIMITED = 2
-    START_GROUP = 3
-    END_GROUP = 4
     FIXED32 = 5
-    SIGNED_VARINT = 8
 
 
 class ProtoReader:
-    """Reads fields from a binary Protobuf/Raksha payload."""
+    """Read bounded fields without advancing beyond the supplied payload."""
 
     def __init__(self, data: bytes) -> None:
         self._data = data
@@ -27,140 +20,134 @@ class ProtoReader:
 
     @property
     def remaining(self) -> int:
-        """Returns remaining unread bytes in buffer."""
+        """Return unread byte count."""
         return len(self._data) - self._pos
 
     @property
     def has_more(self) -> bool:
-        """Checks if reader has more bytes available."""
-        return self._pos < len(self._data)
+        """Return whether unread bytes remain."""
+        return self.remaining > 0
 
-    def read_varint(self) -> int:
-        """Decodes an unsigned varint from the stream."""
-        result = 0
-        shift = 0
-        while True:
-            if self._pos >= len(self._data):
-                raise ValueError("Unexpected end of stream while reading varint")
-            byte = self._data[self._pos]
-            self._pos += 1
-            result |= (byte & 0x7F) << shift
-            shift += 7
-            if not (byte & 0x80):
-                break
+    def take(self, length: int) -> bytes:
+        """Consume exactly length bytes or reject a truncated field."""
+        if length < 0 or length > self.remaining:
+            raise ValueError("Truncated Raksha field")
+        result = self._data[self._pos:self._pos + length]
+        self._pos += length
         return result
 
+    def read_varint(self) -> int:
+        """Decode at most ten bytes as an unsigned 64-bit varint."""
+        value = 0
+        for index in range(10):
+            byte = self.take(1)[0]
+            if index == 9 and byte > 1:
+                raise ValueError("Varint exceeds 64 bits")
+            value |= (byte & 127) << (index * 7)
+            if byte < 128:
+                return value
+        raise ValueError("Varint exceeds ten bytes")
+
     def read_svarint(self) -> int:
-        """Decodes a zigzag-encoded signed varint."""
-        val = self.read_varint()
-        return (val >> 1) ^ (-(val & 1))
+        """Decode a zigzag signed integer."""
+        value = self.read_varint()
+        return (value >> 1) ^ -(value & 1)
 
     def read_tag(self) -> tuple[int, int] | None:
-        """Reads field number and wire type tag, or None if end of stream."""
+        """Read a valid supported tag, or None only at the end of input."""
         if not self.has_more:
             return None
         key = self.read_varint()
-        field_number = key >> 3
-        wire_type = key & 0x07
+        field_number, wire_type = key >> 3, key & 7
+        if not 0 < field_number < (1 << 29) or wire_type not in (0, 1, 2, 5):
+            raise ValueError("Invalid or unsupported wire tag")
         return field_number, wire_type
 
     def read_fixed32_float(self) -> float:
-        """Reads a 32-bit floating point number."""
-        if self._pos + 4 > len(self._data):
-            raise ValueError("Buffer underflow reading float32")
-        val = struct.unpack("<f", self._data[self._pos : self._pos + 4])[0]
-        self._pos += 4
-        return val
+        """Read a little-endian float32."""
+        return struct.unpack("<f", self.take(4))[0]
 
     def read_fixed32_uint(self) -> int:
-        """Reads a 32-bit unsigned integer."""
-        if self._pos + 4 > len(self._data):
-            raise ValueError("Buffer underflow reading uint32")
-        val = struct.unpack("<I", self._data[self._pos : self._pos + 4])[0]
-        self._pos += 4
-        return val
+        """Read a little-endian unsigned integer."""
+        return struct.unpack("<I", self.take(4))[0]
 
     def read_fixed64_ulong(self) -> int:
-        """Reads a 64-bit unsigned integer."""
-        if self._pos + 8 > len(self._data):
-            raise ValueError("Buffer underflow reading ulong64")
-        val = struct.unpack("<Q", self._data[self._pos : self._pos + 8])[0]
-        self._pos += 8
-        return val
+        """Read a little-endian unsigned 64-bit integer."""
+        return struct.unpack("<Q", self.take(8))[0]
 
     def read_bytes(self) -> bytes:
-        """Reads a length-delimited byte chunk."""
-        length = self.read_varint()
-        if self._pos + length > len(self._data):
-            raise ValueError(f"Buffer underflow reading {length} bytes (have {self.remaining})")
-        chunk = self._data[self._pos : self._pos + length]
-        self._pos += length
-        return chunk
+        """Read a length-delimited byte sequence."""
+        return self.take(self.read_varint())
 
     def read_string(self) -> str:
-        """Reads a UTF-8 encoded length-delimited string."""
-        raw = self.read_bytes()
-        return raw.decode("utf-8", errors="replace")
+        """Read strictly valid UTF-8; invalid text raises UnicodeDecodeError."""
+        return self.read_bytes().decode("utf-8")
 
     def skip_field(self, wire_type: int) -> None:
-        """Skips a field according to its wire type."""
+        """Consume a supported field while validating its bounds."""
         if wire_type == WireType.VARINT:
             self.read_varint()
-        elif wire_type == WireType.FIXED64:
-            self._pos += 8
-        elif wire_type == WireType.LENGTH_DELIMITED:
-            length = self.read_varint()
-            self._pos += length
-        elif wire_type == WireType.FIXED32:
-            self._pos += 4
-        else:
-            raise ValueError(f"Unsupported wire type to skip: {wire_type}")
+            return
+        if wire_type == WireType.LENGTH_DELIMITED:
+            self.read_bytes()
+            return
+        if wire_type in (WireType.FIXED32, WireType.FIXED64):
+            self.take(4 if wire_type == WireType.FIXED32 else 8)
+            return
+        raise ValueError("Unsupported wire type")
+
+    def capture_unknown(self, wire_type: int, start_remaining: int) -> bytes:
+        """Consume an unknown field, retaining its original tag and value bytes."""
+        self.skip_field(wire_type)
+        return self._data[len(self._data) - start_remaining:self._pos]
 
 
 class ProtoWriter:
-    """Serializes fields into a binary Protobuf/Raksha payload."""
+    """Encode wire primitives and preserve opaque field bytes."""
 
     def __init__(self) -> None:
         self._buf = bytearray()
 
+    def write_raw(self, payload: bytes) -> None:
+        """Append an already encoded payload."""
+        self._buf.extend(payload)
+
     def write_varint(self, value: int) -> None:
-        """Encodes an unsigned integer as a varint."""
-        if value < 0:
-            value = (1 << 64) + value
-        while True:
-            byte = value & 0x7F
+        """Encode a bounded integer; signed values use 64-bit two's complement."""
+        if not -(1 << 63) <= value < (1 << 64):
+            raise ValueError("Integer exceeds wire width")
+        value &= (1 << 64) - 1
+        while value >= 128:
+            self._buf.append((value & 127) | 128)
             value >>= 7
-            if value > 0:
-                self._buf.append(byte | 0x80)
-            else:
-                self._buf.append(byte)
-                break
+        self._buf.append(value)
 
     def write_tag(self, field_number: int, wire_type: int) -> None:
-        """Writes the field tag header."""
-        key = (field_number << 3) | (wire_type & 0x07)
-        self.write_varint(key)
+        """Write a validated wire tag."""
+        if not 0 < field_number < (1 << 29) or wire_type not in (0, 1, 2, 5):
+            raise ValueError("Invalid or unsupported wire tag")
+        self.write_varint((field_number << 3) | wire_type)
 
     def write_varint_field(self, field_number: int, value: int) -> None:
-        """Writes tag + varint value."""
+        """Write a tag and integer."""
         self.write_tag(field_number, WireType.VARINT)
         self.write_varint(value)
 
     def write_float_field(self, field_number: int, value: float) -> None:
-        """Writes tag + 32-bit float value."""
+        """Write a tag and float32."""
         self.write_tag(field_number, WireType.FIXED32)
-        self._buf.extend(struct.pack("<f", value))
+        self.write_raw(struct.pack("<f", value))
 
     def write_bytes_field(self, field_number: int, value: bytes) -> None:
-        """Writes tag + length-delimited byte chunk."""
+        """Write a tag and length-delimited bytes."""
         self.write_tag(field_number, WireType.LENGTH_DELIMITED)
         self.write_varint(len(value))
-        self._buf.extend(value)
+        self.write_raw(value)
 
     def write_string_field(self, field_number: int, value: str) -> None:
-        """Writes tag + length-delimited UTF-8 string."""
+        """Write a UTF-8 string field."""
         self.write_bytes_field(field_number, value.encode("utf-8"))
 
     def to_bytes(self) -> bytes:
-        """Returns the serialized payload bytes."""
+        """Return the encoded payload."""
         return bytes(self._buf)

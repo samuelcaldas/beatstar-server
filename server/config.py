@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import os
+from pathlib import Path
 from pydantic import Field
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
@@ -37,6 +38,9 @@ class ServerSettings(BaseSettings):
         default="http://beatstar.dev.timoteo.mg.gov.br:8080/assets",
         alias="ASSETS_BASE_URL",
     )
+
+    asset_storage_root: Path = Field(default=Path("data"), alias="ASSET_STORAGE_ROOT")
+    cors_origins: list[str] = Field(default_factory=list, alias="CORS_ORIGINS")
 
     jwt_secret_key: str = Field(
         default="beatstar-default-secret-key-32chars-minimum!",

@@ -7,6 +7,7 @@ from typing import Any
 from server.config import settings
 from server.handlers.base import BaseServiceHandler
 from server.models.headers import ClientHeader
+from server.assets.catalog import binary_resource, MUSIC_CONFIGS
 
 
 class CMSHandler(BaseServiceHandler):
@@ -38,6 +39,12 @@ class CMSHandler(BaseServiceHandler):
         base_url = settings.assets_base_url.rstrip("/")
 
         for name in self.CATALOG_NAMES:
+            resource = binary_resource(settings.asset_storage_root, base_url, name)
+            if resource is not None and name != "GameConfig":
+                resources_list.append(resource)
+                continue
+            if name in MUSIC_CONFIGS:
+                continue
             resources_list.append(
                 {
                     "name": name,

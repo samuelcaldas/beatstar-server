@@ -78,11 +78,16 @@ async def test_binary_config_delivery():
 
 
 @pytest.mark.asyncio
-async def test_cms_handler_includes_music_catalogs():
+async def test_cms_handler_includes_music_catalogs(tmp_path, monkeypatch):
     """Validates cmsservice returns URLs for SongConfig, BeatmapsConfig and AssetsConfig."""
     from server.handlers.cms_handler import CMSHandler
     from server.models.headers import ClientHeader
 
+    monkeypatch.chdir(tmp_path)
+    config_directory = tmp_path / "data/configs"
+    config_directory.mkdir(parents=True)
+    for name in ("SongConfig", "BeatmapsConfig", "AssetsConfig"):
+        (config_directory / f"{name}.bin").write_bytes(b"synthetic-config")
     handler = CMSHandler()
     header = ClientHeader(session_id="test", player_id="test", timestamp=123)
     result = await handler.handle(header, {})

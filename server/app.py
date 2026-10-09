@@ -15,6 +15,7 @@ from server.gateway.dispatcher import GatewayDispatcher
 from server.gateway.header_parser import HeaderParser
 from server.models.headers import ClientHeader
 from server.storage.database import DatabaseManager
+from server.assets.catalog import file_response, BINARY_CONFIGS
 
 # Configuração de timezone America/Sao_Paulo
 os.environ["TZ"] = settings.timezone
@@ -114,13 +115,11 @@ async def get_config(config_name: str) -> Any:
     config_key = config_name.lower()
     now_ms = int(datetime.now(TIMEZONE).timestamp() * 1000)
 
-    # Check for binary config payload
-    if config_name.endswith(".bin"):
-        base_name = config_name[:-4]
-        for candidate_name in (config_name, f"{base_name.capitalize()}.bin", f"{base_name}.bin"):
-            p = Path("data/configs") / candidate_name
-            if p.exists() and p.is_file():
-                return Response(content=p.read_bytes(), media_type="application/octet-stream")
+    if config_key.endswith(".bin"):
+        canonical = next((name for name in BINARY_CONFIGS if name.lower() == config_key[:-4]), None)
+        if canonical is None:
+            raise HTTPException(404, "Config not found")
+        return file_response(settings.asset_storage_root / "configs", f"{canonical}.bin")
 
     if "adsconfig" in config_key:
         return {
@@ -168,48 +167,4 @@ async def get_config(config_name: str) -> Any:
 @app.get("/assets/bundles/{bundle_name}")
 async def get_bundle(bundle_name: str, request: Request) -> Response:
     """Delivers real Unity AssetBundles with HTTP Range support."""
-    # Prevent directory traversal
-    safe_name = os.path.basename(bundle_name)
-    bundle_path = Path("data/bundles") / safe_name
-
-    if not bundle_path.exists() or not bundle_path.is_file():
-        raise HTTPException(status_code=404, detail=f"AssetBundle '{safe_name}' não encontrado.")
-
-    total_size = bundle_path.stat().st_size
-    range_header = request.headers.get("Range")
-
-    if range_header and range_header.startswith("bytes="):
-        # Range: bytes=start-end
-        parts = range_header[6:].split("-")
-        start = int(parts[0]) if parts[0] else 0
-        end = int(parts[1]) if len(parts) > 1 and parts[1] else total_size - 1
-        end = min(end, total_size - 1)
-        length = end - start + 1
-
-        with open(bundle_path, "rb") as f:
-            f.seek(start)
-            data = f.read(length)
-
-        headers = {
-            "Content-Range": f"bytes {start}-{end}/{total_size}",
-            "Accept-Ranges": "bytes",
-            "Content-Length": str(length),
-        }
-        return Response(
-            content=data,
-            status_code=206,
-            headers=headers,
-            media_type="application/octet-stream",
-        )
-
-    data = bundle_path.read_bytes()
-    headers = {
-        "Accept-Ranges": "bytes",
-        "Content-Length": str(total_size),
-    }
-    return Response(
-        content=data,
-        status_code=200,
-        headers=headers,
-        media_type="application/octet-stream",
-    )
+    return file_response(settings.asset_storage_root / "bundles", bundle_name)

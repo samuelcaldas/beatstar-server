@@ -4,7 +4,8 @@ from __future__ import annotations
 
 from enum import IntEnum
 from typing import Any
-from pydantic import BaseModel, Field
+from pydantic import Field
+from server.music.raksha.preservation import PreservedModel
 
 
 class InteractionType(IntEnum):
@@ -32,28 +33,28 @@ class FlickDirection(IntEnum):
     LEFT_DOWN = 8
 
 
-class InteractionPoint(BaseModel):
+class InteractionPoint(PreservedModel):
     """A spatial and temporal point on a track lane."""
 
     beat_offset: float = Field(default=0.0, description="Musical beat timing offset")
     lane: int = Field(default=1, description="Track lane index (1, 2, or 3)")
 
 
-class TapInteractionData(BaseModel):
+class TapInteractionData(PreservedModel):
     """Data for an instantaneous tap or swipe note."""
 
     point: InteractionPoint = Field(default_factory=InteractionPoint)
     flick: FlickDirection = Field(default=FlickDirection.NONE)
 
 
-class DragInteractionData(BaseModel):
+class DragInteractionData(PreservedModel):
     """Data for a sustained hold / drag note across one or more points."""
 
     points: list[InteractionPoint] = Field(default_factory=list)
     flick: FlickDirection = Field(default=FlickDirection.NONE)
 
 
-class InteractionData(BaseModel):
+class InteractionData(PreservedModel):
     """Represents a playable note or interaction element in the chart."""
 
     interaction_type: InteractionType = Field(default=InteractionType.TAP)
@@ -63,14 +64,14 @@ class InteractionData(BaseModel):
     raw_extra: dict[int, Any] = Field(default_factory=dict, description="Preserved extra tags for wire roundtrip")
 
 
-class BeatmapStar(BaseModel):
+class BeatmapStar(PreservedModel):
     """Threshold required to earn a specific star level."""
 
     star_index: int = 1
     points_required: int = 0
 
 
-class BeatmapInteractionsTemplate(BaseModel):
+class BeatmapInteractionsTemplate(PreservedModel):
     """Top-level Beatstar chart containing all gameplay notes and metadata."""
 
     id: int = Field(default=0, description="Unique variant identifier")
