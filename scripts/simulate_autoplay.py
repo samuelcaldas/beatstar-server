@@ -27,13 +27,19 @@ class CompleteSongAutoplaySimulator:
 
     MAX_SCORE_NORMAL = 50000  # Diamond Perfect maximum score for Normal songs
 
-    def __init__(self, base_url: str = "http://localhost:8080", cinta: str = "676d4d53-f0cb-41c6-8c27-4bb3c3c3c905"):
+    def __init__(
+        self,
+        base_url: str = "http://localhost:8080",
+        cinta: str = "676d4d53-f0cb-41c6-8c27-4bb3c3c3c905",
+    ):
         self.base_url = base_url.rstrip("/")
         self.cinta = cinta
         self.auth_ticket = ""
         self.clide = ""
 
-    def _post(self, service: str, body: dict[str, Any], rpc_name: str = "rpc") -> dict[str, Any]:
+    def _post(
+        self, service: str, body: dict[str, Any], rpc_name: str = "rpc"
+    ) -> dict[str, Any]:
         """Sends POST request to the Gateway."""
         url = f"{self.base_url}/gateway"
         payload = {
@@ -84,7 +90,9 @@ class CompleteSongAutoplaySimulator:
         resources = cms_res["body"]["blah"]["blah"]["blah"]
         print(f"  [+] CMS retornou {len(resources)} catálogos de assets.")
 
-        songs_res = self._post(service="songservice", body={"id": 3}, rpc_name="rpc-songs")
+        songs_res = self._post(
+            service="songservice", body={"id": 3}, rpc_name="rpc-songs"
+        )
         songs = songs_res["body"]["songs"]
         song = songs[0]
         print(f"  [+] Música selecionada:")
@@ -124,31 +132,51 @@ class CompleteSongAutoplaySimulator:
         """Simulates all 5 gameplay stages with 100% Perfect+ notes reaching 50,000 pts."""
         print("\n=== [4/6] Execução Completa da Música com Autoplay (5 Fases) ===")
         stages = [
-            ("Fase 1: Introdução & Verso 1", 1, [
-                ("TapInteraction", "PERFECT_PLUS", 2500),
-                ("TapInteraction", "PERFECT_PLUS", 2500),
-                ("HoldInteraction", "PERFECT_PLUS", 5000),
-            ]),
-            ("Fase 2: Verso 2", 2, [
-                ("TapInteraction", "PERFECT_PLUS", 2500),
-                ("FlickInteraction", "PERFECT_PLUS", 2500),
-                ("HoldInteraction", "PERFECT_PLUS", 5000),
-            ]),
-            ("Fase 3: Refrão 1 (Streak x2)", 2, [
-                ("SwitchHoldInteraction", "PERFECT_PLUS", 5000),
-                ("FlickInteraction", "PERFECT_PLUS", 2500),
-                ("TapInteraction", "PERFECT_PLUS", 2500),
-            ]),
-            ("Fase 4: Solo Instrumental (Streak x3)", 3, [
-                ("HoldFlickInteraction", "PERFECT_PLUS", 5000),
-                ("FlickInteraction", "PERFECT_PLUS", 2500),
-                ("TapInteraction", "PERFECT_PLUS", 2500),
-            ]),
-            ("Fase 5: Refrão Final & Clímax (Streak x4)", 4, [
-                ("SwitchHoldInteraction", "PERFECT_PLUS", 5000),
-                ("HoldInteraction", "PERFECT_PLUS", 2500),
-                ("TapInteraction (Final Note)", "PERFECT_PLUS", 2500),
-            ]),
+            (
+                "Fase 1: Introdução & Verso 1",
+                1,
+                [
+                    ("TapInteraction", "PERFECT_PLUS", 2500),
+                    ("TapInteraction", "PERFECT_PLUS", 2500),
+                    ("HoldInteraction", "PERFECT_PLUS", 5000),
+                ],
+            ),
+            (
+                "Fase 2: Verso 2",
+                2,
+                [
+                    ("TapInteraction", "PERFECT_PLUS", 2500),
+                    ("FlickInteraction", "PERFECT_PLUS", 2500),
+                    ("HoldInteraction", "PERFECT_PLUS", 5000),
+                ],
+            ),
+            (
+                "Fase 3: Refrão 1 (Streak x2)",
+                2,
+                [
+                    ("SwitchHoldInteraction", "PERFECT_PLUS", 5000),
+                    ("FlickInteraction", "PERFECT_PLUS", 2500),
+                    ("TapInteraction", "PERFECT_PLUS", 2500),
+                ],
+            ),
+            (
+                "Fase 4: Solo Instrumental (Streak x3)",
+                3,
+                [
+                    ("HoldFlickInteraction", "PERFECT_PLUS", 5000),
+                    ("FlickInteraction", "PERFECT_PLUS", 2500),
+                    ("TapInteraction", "PERFECT_PLUS", 2500),
+                ],
+            ),
+            (
+                "Fase 5: Refrão Final & Clímax (Streak x4)",
+                4,
+                [
+                    ("SwitchHoldInteraction", "PERFECT_PLUS", 5000),
+                    ("HoldInteraction", "PERFECT_PLUS", 2500),
+                    ("TapInteraction (Final Note)", "PERFECT_PLUS", 2500),
+                ],
+            ),
         ]
 
         accumulated_score = 0
@@ -159,16 +187,24 @@ class CompleteSongAutoplaySimulator:
             for note_type, accuracy, points in notes:
                 accumulated_score += points
                 total_notes += 1
-                print(f"     -> {note_type:30} [{accuracy}] +{points:5} pts (Acumulado: {accumulated_score:5} pts)")
+                print(
+                    f"     -> {note_type:30} [{accuracy}] +{points:5} pts (Acumulado: {accumulated_score:5} pts)"
+                )
 
         print(f"\n  [★] Execução completa finalizada!")
         print(f"      - Total de Notas: {total_notes}")
         print(f"      - Taxa de Precisão Perfect+: 100.0%")
-        print(f"      - Pontuação Máxima Atingida: {accumulated_score} / {self.MAX_SCORE_NORMAL} pts (DIAMOND PERFECT)")
-        assert accumulated_score == self.MAX_SCORE_NORMAL, f"Pontuação {accumulated_score} diverge de {self.MAX_SCORE_NORMAL}"
+        print(
+            f"      - Pontuação Máxima Atingida: {accumulated_score} / {self.MAX_SCORE_NORMAL} pts (DIAMOND PERFECT)"
+        )
+        assert (
+            accumulated_score == self.MAX_SCORE_NORMAL
+        ), f"Pontuação {accumulated_score} diverge de {self.MAX_SCORE_NORMAL}"
         return accumulated_score, total_notes
 
-    def step5_end_song_and_sync(self, song: dict[str, Any], score: int, notes_count: int) -> None:
+    def step5_end_song_and_sync(
+        self, song: dict[str, Any], score: int, notes_count: int
+    ) -> None:
         """Sends completion audit and updates server profile."""
         print("\n=== [5/6] Conclusão da Música e Auditoria de Pontuação Máxima ===")
         end_res = self._post(
@@ -190,7 +226,9 @@ class CompleteSongAutoplaySimulator:
             rpc_name="rpc-song-end",
         )
         assert end_res["body"]["sync_success"] is True
-        print(f"  [+] Auditoria RhythmGameEnded_SharplaAudit persistida com sucesso no servidor.")
+        print(
+            f"  [+] Auditoria RhythmGameEnded_SharplaAudit persistida com sucesso no servidor."
+        )
 
     def step6_verify_player_profile(self) -> None:
         """Asserts persistence in the private server database."""
@@ -209,11 +247,15 @@ class CompleteSongAutoplaySimulator:
         print(f"      - Última Música Selecionada: {profile['selected_song']}")
 
         assert profile["stars"] >= 1, "Estrelas devem ter incrementado!"
-        assert profile["coins"] >= 1050, "Moedas devem ter incrementado com a pontuação máxima!"
+        assert (
+            profile["coins"] >= 1050
+        ), "Moedas devem ter incrementado com a pontuação máxima!"
         print("\n==================================================================")
         print("🎉 VALIDAÇÃO CONCLUÍDA COM SUCESSO:")
         print("   Música completa executada com Autoplay no servidor privado!")
-        print(f"   Pontuação Máxima atingida: {self.MAX_SCORE_NORMAL} pts (Diamond Perfect)")
+        print(
+            f"   Pontuação Máxima atingida: {self.MAX_SCORE_NORMAL} pts (Diamond Perfect)"
+        )
         print("==================================================================")
 
     def run(self) -> None:
@@ -227,9 +269,17 @@ class CompleteSongAutoplaySimulator:
 
 
 def main() -> None:
-    parser = argparse.ArgumentParser(description="Simulate complete Beatstar song autoplay reaching maximum score")
-    parser.add_argument("--url", default="http://localhost:8080", help="URL base do servidor privado")
-    parser.add_argument("--cinta", default="676d4d53-f0cb-41c6-8c27-4bb3c3c3c905", help="UUID Cinta do jogador")
+    parser = argparse.ArgumentParser(
+        description="Simulate complete Beatstar song autoplay reaching maximum score"
+    )
+    parser.add_argument(
+        "--url", default="http://localhost:8080", help="URL base do servidor privado"
+    )
+    parser.add_argument(
+        "--cinta",
+        default="676d4d53-f0cb-41c6-8c27-4bb3c3c3c905",
+        help="UUID Cinta do jogador",
+    )
     args = parser.parse_args()
 
     simulator = CompleteSongAutoplaySimulator(base_url=args.url, cinta=args.cinta)
