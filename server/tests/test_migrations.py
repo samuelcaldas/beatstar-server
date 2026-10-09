@@ -8,6 +8,7 @@ from sqlalchemy import create_engine
 
 from server.admin.models import Base
 from server.models.player import PlayerProfile
+from server.music import models as music_models  # noqa: F401  music tables must be compared too
 from server.storage.database import DatabaseManager
 from server.storage.migrations.runner import upgrade_to_head
 from server.storage.player_repository import PlayerRepository

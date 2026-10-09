@@ -6,11 +6,7 @@ The fastapi-users SQLAlchemy access-token adapter hard-codes its foreign key to
 
 from fastapi_users.db import SQLAlchemyBaseUserTableUUID
 from fastapi_users_db_sqlalchemy.access_token import SQLAlchemyBaseAccessTokenTableUUID
-from sqlalchemy.orm import DeclarativeBase
-
-
-class Base(DeclarativeBase):
-    """Declarative base shared by administration and music domain tables."""
+from server.storage.base import Base
 
 
 class AdministratorUser(SQLAlchemyBaseUserTableUUID, Base):
