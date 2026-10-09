@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="utf-8"?>
+<network-security-config>
+    <!-- Permite conexões HTTP em texto claro para ambiente de desenvolvimento local -->
+    <base-config cleartextTrafficPermitted="true">
+        <trust-anchors>
+            <!-- Permite certificados instalados pelo sistema Android -->
+            <certificates src="system" />
+            <!-- Permite certificados adicionados pelo usuário (ex: Burp Suite, Charles Proxy, mitmproxy) -->
+            <certificates src="user" />
+        </trust-anchors>
+    </base-config>
+
+    <!-- Configuração específica para os domínios do Beatstar e do servidor privado -->
+    <domain-config cleartextTrafficPermitted="true">
+        <domain includeSubdomains="true">flamingo.apelabs.net</domain>
+        <domain includeSubdomains="true">spaceapegames.com</domain>
+        <domain includeSubdomains="true">beatstar.com</domain>
+        <domain includeSubdomains="true">timoteo.mg.gov.br</domain>
+        <domain includeSubdomains="true">localhost</domain>
+        <domain includeSubdomains="true">10.250.50.165</domain>
+        <trust-anchors>
+            <certificates src="system" />
+            <certificates src="user" />
+        </trust-anchors>
+    </domain-config>
+</network-security-config>

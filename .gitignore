@@ -33,15 +33,14 @@ __pycache__/
 # Reverse Engineering Outputs and Artifacts
 extracted/
 decompiled/
-tools/bin/
-tools/jadx/
-tools/Il2CppDumper/
+tools/
 dump.cs
 script.json
 stringliteral.json
 DummyDll/
 
 # Databases & local state
+data/
 *.db
 *.sqlite
 *.sqlite3
