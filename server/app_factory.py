@@ -45,12 +45,14 @@ def default_database_path() -> str:
 def admin_settings_from_environment(server_settings: ServerSettings) -> AdminAuthSettings | None:
     """Builds administrator settings from configuration, or None when no secret is configured.
 
+    A blank value counts as unset, so a copied .env.example does not stop the game server.
     Returns None so the game server starts without administration routes.
     """
-    if server_settings.admin_auth_secret is None:
+    secret = server_settings.admin_auth_secret
+    if secret is None or not secret.get_secret_value():
         return None
     return AdminAuthSettings(
-        secret=server_settings.admin_auth_secret.get_secret_value(),
+        secret=secret.get_secret_value(),
         session_lifetime_seconds=server_settings.admin_session_lifetime_seconds,
         cookie_secure=server_settings.admin_cookie_secure,
         allowed_origins=tuple(server_settings.cors_origins),
@@ -62,6 +64,7 @@ def admin_settings_from_environment(server_settings: ServerSettings) -> AdminAut
 def create_app(
     database_path: str | None = None,
     admin_settings: AdminAuthSettings | None = None,
+    cors_origins: list[str] | None = None,
 ) -> FastAPI:
     """Builds an application whose routes and lifespan use one injected database.
 
@@ -69,6 +72,8 @@ def create_app(
         database_path: SQLite file to use. Defaults to the path from DATABASE_URL.
         admin_settings: Administrator authentication configuration. Defaults to the
             environment; when neither is set, administration routes are not mounted.
+        cors_origins: Exact browser origins allowed to call the API with credentials.
+            Defaults to CORS_ORIGINS; an empty list grants no browser access.
 
     Returns:
         A configured FastAPI application with state.database, state.dispatcher and,
@@ -112,10 +117,11 @@ def create_app(
     )
     if resolved_admin is not None:
         app.include_router(build_admin_router(resolved_admin, admin_session_maker))
-    if settings.cors_origins:
+    resolved_cors = settings.cors_origins if cors_origins is None else cors_origins
+    if resolved_cors:
         app.add_middleware(
             CORSMiddleware,
-            allow_origins=settings.cors_origins,
+            allow_origins=resolved_cors,
             allow_credentials=True,
             allow_methods=["GET", "POST", "PUT", "PATCH", "DELETE"],
             allow_headers=["Content-Type", "X-CSRF-Token"],
