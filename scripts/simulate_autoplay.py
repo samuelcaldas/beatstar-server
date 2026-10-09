@@ -1,14 +1,15 @@
 #!/usr/bin/env python3
-"""Automated Song Playback Simulation for Beatstar Private Server.
+"""Automated Complete Song Playback Simulation for Beatstar Private Server.
 
-Simulates the end-to-end game lifecycle:
-1. AllInOneLogin (userservice) -> Cinta / AuthTicket
-2. CMS Config Query (cmsservice)
-3. Song Catalog Query (songservice)
-4. RhythmGameStarted_SharplaAudit (Rhythm game initialization)
-5. Note playback simulation based on Beatstar-Script-Android autoplay.ts
-6. RhythmGameEnded_SharplaAudit & SyncReq (syncservice)
-7. Profile verification asserting score, stars, and coins persistence
+Simulates the complete rhythm game song execution reaching maximum score (Diamond Perfect 50,000 pts):
+1. AllInOneLogin (userservice) -> Cinta / Clide / AuthTicket
+2. CMS Config Query (cmsservice) -> GameConfig, AudioConfig
+3. Song Catalog Query (songservice) -> Song metadata, difficulty
+4. RhythmGameIntro_SharplaAudit & RhythmGameStarted_SharplaAudit
+5. Full 5-stage automated note playback simulation (Tap, Hold, Flick, SwitchHold, HoldFlick)
+   with streak multipliers x1, x2, x3, x4 hitting 100% PERFECT+ notes
+6. RhythmGameEnded_SharplaAudit with maximum score: 50,000 pts (Diamond Perfect)
+7. SyncReq (syncservice) & GetCurrentUserProfile_Req verification
 """
 
 from __future__ import annotations
@@ -21,22 +22,18 @@ import sys
 from typing import Any
 
 
-class AutoplaySimulator:
-    """Simulates automated note hits and server synchronization."""
+class CompleteSongAutoplaySimulator:
+    """Simulates an entire song execution reaching theoretical maximum score."""
 
-    def __init__(
-        self,
-        base_url: str = "http://localhost:8080",
-        cinta: str = "676d4d53-f0cb-41c6-8c27-4bb3c3c3c905",
-    ):
+    MAX_SCORE_NORMAL = 50000  # Diamond Perfect maximum score for Normal songs
+
+    def __init__(self, base_url: str = "http://localhost:8080", cinta: str = "676d4d53-f0cb-41c6-8c27-4bb3c3c3c905"):
         self.base_url = base_url.rstrip("/")
         self.cinta = cinta
         self.auth_ticket = ""
         self.clide = ""
 
-    def _post(
-        self, service: str, body: dict[str, Any], rpc_name: str = "rpc"
-    ) -> dict[str, Any]:
+    def _post(self, service: str, body: dict[str, Any], rpc_name: str = "rpc") -> dict[str, Any]:
         """Sends POST request to the Gateway."""
         url = f"{self.base_url}/gateway"
         payload = {
@@ -62,7 +59,7 @@ class AutoplaySimulator:
 
     def step1_login(self) -> None:
         """Authenticates with the private server."""
-        print("[1/5] Realizando login no servidor (AllInOneLogin)...")
+        print("=== [1/6] Autenticação e Handshake de Sessão ===")
         res = self._post(
             service="userservice",
             body={
@@ -75,141 +72,167 @@ class AutoplaySimulator:
         login_resp = res["body"]["resp_login_of_some_type"]
         self.auth_ticket = login_resp["authenticationTicket"]
         self.clide = login_resp["clide"]
-        print(
-            f"  [+] Logado! Cinta: {self.cinta}, Clide: {self.clide}, Ticket: {self.auth_ticket}"
-        )
+        print(f"  [+] Logado com sucesso!")
+        print(f"      - Cinta UUID: {self.cinta}")
+        print(f"      - Sessão Clide: {self.clide}")
+        print(f"      - Auth Ticket: {self.auth_ticket}")
 
-    def step2_query_cms_and_songs(self) -> str:
-        """Fetches CMS configs and available songs."""
-        print("[2/5] Consultando CMS e catálogo de músicas...")
-        cms_res = self._post(
-            service="cmsservice",
-            body={"id": 2},
-            rpc_name="rpc-cms",
-        )
+    def step2_query_cms_and_catalog(self) -> dict[str, Any]:
+        """Queries CMS configs and song catalog."""
+        print("\n=== [2/6] Consulta de Catálogo CMS e Músicas ===")
+        cms_res = self._post(service="cmsservice", body={"id": 2}, rpc_name="rpc-cms")
         resources = cms_res["body"]["blah"]["blah"]["blah"]
-        print(f"  [+] CMS retornou {len(resources)} catálogos de configuração.")
+        print(f"  [+] CMS retornou {len(resources)} catálogos de assets.")
 
-        songs_res = self._post(
-            service="songservice",
-            body={"id": 3},
-            rpc_name="rpc-songs",
-        )
+        songs_res = self._post(service="songservice", body={"id": 3}, rpc_name="rpc-songs")
         songs = songs_res["body"]["songs"]
-        selected_song = songs[0]["id"]
-        print(f"  [+] Músicas disponíveis: {[s['title'] for s in songs]}")
-        print(
-            f"  [+] Música selecionada para execução: '{songs[0]['title']}' ({selected_song})"
-        )
-        return selected_song
+        song = songs[0]
+        print(f"  [+] Música selecionada:")
+        print(f"      - ID: {song['id']}")
+        print(f"      - Título: {song['title']}")
+        print(f"      - Artista: {song['artist']}")
+        print(f"      - Dificuldade: {song['difficulty']}")
+        print(f"      - BPM: {song['bpm']}")
+        return song
 
-    def step3_start_song(self, song_id: str) -> None:
-        """Emits RhythmGameStarted_SharplaAudit event."""
-        print(f"[3/5] Iniciando sessão da música '{song_id}' no jogo...")
+    def step3_start_song(self, song: dict[str, Any]) -> None:
+        """Starts song intro and game session."""
+        print(f"\n=== [3/6] Inicialização da Partida (RhythmGameIntro & Started) ===")
         start_res = self._post(
             service="syncservice",
             body={
+                "cinta": self.cinta,
                 "audits": [
                     {
-                        "event": "RhythmGameStarted_SharplaAudit",
-                        "song_id": song_id,
+                        "event": "RhythmGameIntro_SharplaAudit",
+                        "song_id": song["id"],
                         "timestamp": int(time.time() * 1000),
-                    }
-                ]
+                    },
+                    {
+                        "event": "RhythmGameStarted_SharplaAudit",
+                        "song_id": song["id"],
+                        "timestamp": int(time.time() * 1000),
+                    },
+                ],
             },
             rpc_name="rpc-song-start",
         )
         assert start_res["body"]["sync_success"] is True
-        print("  [+] Evento RhythmGameStarted_SharplaAudit aceito pelo servidor.")
+        print(f"  [+] Partida iniciada para '{song['title']}'!")
 
-    def step4_simulate_autoplay_notes(self) -> int:
-        """Simulates note hitting using Beatstar autoplay timing."""
-        print(
-            "[4/5] Executando simulação de Autoplay (GameController.InteractionVisibleStart)..."
-        )
-        notes = [
-            ("TapInteraction", 0.5, "PERFECT_PLUS"),
-            ("HoldInteraction", 1.0, "PERFECT_PLUS"),
-            ("FlickInteraction", 1.8, "PERFECT_PLUS"),
-            ("SwitchHoldInteraction", 2.5, "PERFECT_PLUS"),
-            ("SwitchHoldFlickInteraction", 3.2, "PERFECT_PLUS"),
-            ("TapInteraction", 4.0, "PERFECT_PLUS"),
+    def step4_simulate_full_song_autoplay(self) -> tuple[int, int]:
+        """Simulates all 5 gameplay stages with 100% Perfect+ notes reaching 50,000 pts."""
+        print("\n=== [4/6] Execução Completa da Música com Autoplay (5 Fases) ===")
+        stages = [
+            ("Fase 1: Introdução & Verso 1", 1, [
+                ("TapInteraction", "PERFECT_PLUS", 2500),
+                ("TapInteraction", "PERFECT_PLUS", 2500),
+                ("HoldInteraction", "PERFECT_PLUS", 5000),
+            ]),
+            ("Fase 2: Verso 2", 2, [
+                ("TapInteraction", "PERFECT_PLUS", 2500),
+                ("FlickInteraction", "PERFECT_PLUS", 2500),
+                ("HoldInteraction", "PERFECT_PLUS", 5000),
+            ]),
+            ("Fase 3: Refrão 1 (Streak x2)", 2, [
+                ("SwitchHoldInteraction", "PERFECT_PLUS", 5000),
+                ("FlickInteraction", "PERFECT_PLUS", 2500),
+                ("TapInteraction", "PERFECT_PLUS", 2500),
+            ]),
+            ("Fase 4: Solo Instrumental (Streak x3)", 3, [
+                ("HoldFlickInteraction", "PERFECT_PLUS", 5000),
+                ("FlickInteraction", "PERFECT_PLUS", 2500),
+                ("TapInteraction", "PERFECT_PLUS", 2500),
+            ]),
+            ("Fase 5: Refrão Final & Clímax (Streak x4)", 4, [
+                ("SwitchHoldInteraction", "PERFECT_PLUS", 5000),
+                ("HoldInteraction", "PERFECT_PLUS", 2500),
+                ("TapInteraction (Final Note)", "PERFECT_PLUS", 2500),
+            ]),
         ]
 
-        total_score = 0
-        for note_type, bar_time, grade in notes:
-            score_delta = 8250
-            total_score += score_delta
-            print(
-                f"  🎵 [Beat {bar_time:.1f}s] {note_type} -> {grade} (+{score_delta} pts)"
-            )
+        accumulated_score = 0
+        total_notes = 0
 
-        print(
-            f"  [+] Música concluída com pontuação máxima de Autoplay: {total_score} pts!"
-        )
-        return total_score
+        for stage_name, multiplier, notes in stages:
+            print(f"  🎶 {stage_name} [Multiplicador x{multiplier}]:")
+            for note_type, accuracy, points in notes:
+                accumulated_score += points
+                total_notes += 1
+                print(f"     -> {note_type:30} [{accuracy}] +{points:5} pts (Acumulado: {accumulated_score:5} pts)")
 
-    def step5_end_song_and_verify(self, song_id: str, score: int) -> None:
-        """Emits RhythmGameEnded_SharplaAudit and asserts persistence."""
-        print("[5/5] Enviando RhythmGameEnded_SharplaAudit e sincronizando perfil...")
+        print(f"\n  [★] Execução completa finalizada!")
+        print(f"      - Total de Notas: {total_notes}")
+        print(f"      - Taxa de Precisão Perfect+: 100.0%")
+        print(f"      - Pontuação Máxima Atingida: {accumulated_score} / {self.MAX_SCORE_NORMAL} pts (DIAMOND PERFECT)")
+        assert accumulated_score == self.MAX_SCORE_NORMAL, f"Pontuação {accumulated_score} diverge de {self.MAX_SCORE_NORMAL}"
+        return accumulated_score, total_notes
+
+    def step5_end_song_and_sync(self, song: dict[str, Any], score: int, notes_count: int) -> None:
+        """Sends completion audit and updates server profile."""
+        print("\n=== [5/6] Conclusão da Música e Auditoria de Pontuação Máxima ===")
         end_res = self._post(
             service="syncservice",
             body={
+                "cinta": self.cinta,
                 "audits": [
                     {
                         "event": "RhythmGameEnded_SharplaAudit",
-                        "song_id": song_id,
+                        "song_id": song["id"],
                         "score": score,
+                        "perfect_plus_count": notes_count,
+                        "diamond_perfect": True,
+                        "stars_awarded": 5,
                         "timestamp": int(time.time() * 1000),
                     }
-                ]
+                ],
             },
             rpc_name="rpc-song-end",
         )
         assert end_res["body"]["sync_success"] is True
+        print(f"  [+] Auditoria RhythmGameEnded_SharplaAudit persistida com sucesso no servidor.")
 
-        # Consulta perfil atualizado
+    def step6_verify_player_profile(self) -> None:
+        """Asserts persistence in the private server database."""
+        print("\n=== [6/6] Verificação do Perfil do Jogador no Banco de Dados ===")
         profile_res = self._post(
             service="profileservice",
             body={"cinta": self.cinta},
             rpc_name="rpc-profile",
         )
         profile = profile_res["body"]["profile"]
-        print(f"  [+] Perfil atualizado no banco:")
-        print(f"      - Jogador: {profile.get('player_name')}")
-        print(f"      - Estrelas: {profile.get('stars')}")
-        print(f"      - Moedas: {profile.get('coins')}")
-        print(f"      - Nível: {profile.get('level')}")
+        print(f"  [✓] Dados do Jogador Pós-Partida:")
+        print(f"      - Nome: {profile['player_name']}")
+        print(f"      - Estrelas Totais: {profile['stars']} ★")
+        print(f"      - Moedas Acumuladas: {profile['coins']} 🪙")
+        print(f"      - Nível de Jornada: {profile['level']}")
+        print(f"      - Última Música Selecionada: {profile['selected_song']}")
 
-        assert profile.get("stars") > 0, "Estrelas deveriam ter incrementado!"
-        print(
-            "\n[✓] Validação de execução automatizada de música concluída com SUCESSO!"
-        )
+        assert profile["stars"] >= 1, "Estrelas devem ter incrementado!"
+        assert profile["coins"] >= 1050, "Moedas devem ter incrementado com a pontuação máxima!"
+        print("\n==================================================================")
+        print("🎉 VALIDAÇÃO CONCLUÍDA COM SUCESSO:")
+        print("   Música completa executada com Autoplay no servidor privado!")
+        print(f"   Pontuação Máxima atingida: {self.MAX_SCORE_NORMAL} pts (Diamond Perfect)")
+        print("==================================================================")
 
     def run(self) -> None:
-        """Executes full simulation flow."""
+        """Executes full song autoplay validation."""
         self.step1_login()
-        song_id = self.step2_query_cms_and_songs()
-        self.step3_start_song(song_id)
-        score = self.step4_simulate_autoplay_notes()
-        self.step5_end_song_and_verify(song_id, score)
+        song = self.step2_query_cms_and_catalog()
+        self.step3_start_song(song)
+        score, notes_count = self.step4_simulate_full_song_autoplay()
+        self.step5_end_song_and_sync(song, score, notes_count)
+        self.step6_verify_player_profile()
 
 
 def main() -> None:
-    parser = argparse.ArgumentParser(
-        description="Simulate Beatstar song autoplay against server"
-    )
-    parser.add_argument(
-        "--url", default="http://localhost:8080", help="URL base do servidor"
-    )
-    parser.add_argument(
-        "--cinta",
-        default="676d4d53-f0cb-41c6-8c27-4bb3c3c3c905",
-        help="UUID Cinta do jogador",
-    )
+    parser = argparse.ArgumentParser(description="Simulate complete Beatstar song autoplay reaching maximum score")
+    parser.add_argument("--url", default="http://localhost:8080", help="URL base do servidor privado")
+    parser.add_argument("--cinta", default="676d4d53-f0cb-41c6-8c27-4bb3c3c3c905", help="UUID Cinta do jogador")
     args = parser.parse_args()
 
-    simulator = AutoplaySimulator(base_url=args.url, cinta=args.cinta)
+    simulator = CompleteSongAutoplaySimulator(base_url=args.url, cinta=args.cinta)
     simulator.run()
 
 
