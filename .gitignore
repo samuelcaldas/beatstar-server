@@ -47,3 +47,6 @@ data/
 
 # Git worktrees
 .worktrees/
+
+# Playwright artifacts and screen captures
+.playwright-mcp/
