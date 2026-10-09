@@ -150,7 +150,11 @@ docker --context docker-dev run --rm \
 
 The CLI launches a fresh `python -I` process for each bundle/core file,
 with a 1 GiB address-space limit, 25 CPU seconds and a 30-second wall timeout.
-Defaults permit at most 512 candidate files of at most 256 MiB each.
+Defaults permit at most 4,096 visited directory entries, 512 candidate files,
+256 MiB per file, and 512 MiB of total candidate input. A shared 600-second
+parser deadline caps cumulative worker time; remaining files are fingerprinted
+but report `TimeoutError` rather than starting more parsers after that deadline.
+UnityPy is pinned to the investigated version, 1.25.4, in requirements.txt.
 It rejects symlinks and nonregular candidate files. The surrounding container
 is required for network/filesystem isolation; Python's `-I` alone is not a
 security sandbox. Do not run binary inspection unsandboxed on the host.

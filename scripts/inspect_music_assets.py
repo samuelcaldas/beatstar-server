@@ -9,6 +9,7 @@ from pathlib import Path
 import resource
 import subprocess
 import sys
+import time
 
 
 MAX_FILE_BYTES = 256 * 1024 * 1024
@@ -33,6 +34,9 @@ def parse_arguments():
     parser.add_argument("--max-file-bytes", type=positive_integer, default=MAX_FILE_BYTES)
     parser.add_argument("--max-files", type=positive_integer, default=MAX_FILES)
     parser.add_argument("--timeout", type=positive_integer, default=30)
+    parser.add_argument("--max-entries", type=positive_integer, default=4096)
+    parser.add_argument("--max-total-bytes", type=positive_integer, default=512 * 1024 * 1024)
+    parser.add_argument("--max-parser-seconds", type=positive_integer, default=600)
     parser.add_argument("--probe", action="store_true", help=argparse.SUPPRESS)
     arguments = parser.parse_args()
     if not sys.flags.isolated:
@@ -56,7 +60,9 @@ def discover_files(arguments):
     if root.is_symlink() or not root.is_dir():
         raise ValueError("source must be a real directory, not a symlink")
     files = []
-    for path in root.rglob("*"):
+    for count, path in enumerate(root.rglob("*"), start=1):
+        if count > arguments.max_entries:
+            raise ValueError("input exceeds directory entry limit")
         if path.is_symlink():
             raise ValueError("symlink inputs are not permitted")
         if path.suffix == ".bundle" or path.name == "data.unity3d":
@@ -64,6 +70,8 @@ def discover_files(arguments):
             files.append(path)
         if len(files) > arguments.max_files:
             raise ValueError("input exceeds file count limit")
+    if sum(path.stat().st_size for path in files) > arguments.max_total_bytes:
+        raise ValueError("input exceeds total byte limit")
     return sorted(files)
 
 
@@ -130,27 +138,36 @@ def probe(arguments):
     return summary
 
 
-def inspect_file(path, arguments):
-    """Run a fresh isolated parser process; report failures instead of compatibility."""
-    record = fingerprint(path, arguments.source)
+def run_probe(path, arguments, deadline):
+    """Run a bounded parser, raising TimeoutError when the shared budget expires."""
+    remaining = min(arguments.timeout, deadline - time.monotonic())
+    if remaining <= 0:
+        raise TimeoutError("inventory parser budget expired")
     command = [sys.executable, "-I", str(Path(__file__).resolve()), str(path),
                "--unity-version", arguments.unity_version, "--probe",
                "--max-file-bytes", str(arguments.max_file_bytes)]
+    result = subprocess.run(command, capture_output=True, text=True,
+                            timeout=remaining, check=True)
+    return json.loads(result.stdout)
+
+
+def inspect_file(path, arguments, deadline):
+    """Run an isolated parser; report failures instead of compatibility."""
+    record = fingerprint(path, arguments.source)
     try:
-        result = subprocess.run(command, capture_output=True, text=True,
-                                timeout=arguments.timeout, check=True)
-        record.update(json.loads(result.stdout))
-    except (subprocess.SubprocessError, ValueError) as error:
+        record.update(run_probe(path, arguments, deadline))
+    except (subprocess.SubprocessError, ValueError, TimeoutError) as error:
         record.update(status="error", error=type(error).__name__)
     return record
 
 
 def inventory(arguments, files):
     """Build a fingerprint report that never asserts Android compatibility."""
+    deadline = time.monotonic() + arguments.max_parser_seconds
     return {"schema_version": 1, "android_compatible": False,
             "tool": {"name": "UnityPy", "version": version("UnityPy")},
             "fallback_unity_version": arguments.unity_version,
-            "files": [inspect_file(path, arguments) for path in files]}
+            "files": [inspect_file(path, arguments, deadline) for path in files]}
 
 
 def main():
