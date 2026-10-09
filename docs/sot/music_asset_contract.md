@@ -51,7 +51,8 @@ Also present but **not decoded** into the schema: `6`, `7`, `8`, `9` length-deli
 Item level (`InteractionData`): `1` type; `3` tap data; `4` drag data; `6` track. Field `13` varint is present on
 1,108 items across the 60 charts and is **not** decoded.
 
-Coverage measurement (a one-off sandboxed script, not committed; it reads the extracted charts read-only):
+Coverage measurement (committed as `test_decode_all_extracted_apk_charts` and the chart 660 detached test; the
+unknown-tag histogram came from a one-off sandboxed script that is not committed):
 
 - Rebuilt each chart by `model_validate(model_dump())`, which drops retained source bytes, then re-encoded.
 - Result: **60/60 charts re-encode byte-equal** with source retention defeated.
@@ -88,10 +89,11 @@ real tree is far below these budgets. Outputs are named `.bnk.bytes` for sound b
 
 ## 5. Tests and their limits
 
-- Default suite, no data mounts: **74 passed, 5 skipped**. The skips are the real-fixture tests that need
-  `data/extracted`, `data/configs` and `data/bundles`.
+- Default suite, no data mounts: **73 passed, 7 skipped**. All seven skips are real-fixture tests that need
+  `data/extracted`, `data/configs` or `data/bundles` (listed with `-rs`). The binary-config delivery test skips
+  instead of passing vacuously when its file is absent.
 - Real-mount suite (`test_raksha_codec.py`, `test_asset_delivery.py`, read-only mounts of the new extractor output,
-  `python -I`, no network): **10 passed, 0 skipped**.
+  `python -I`, no network): **10 passed, 0 skipped**. The all-60 charts test asserts detached byte equality.
 - Earlier "49 tests passing" was an overstatement. The 44-pass/5-skip baseline is the honest starting count.
 
 Delivery:

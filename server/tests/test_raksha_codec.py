@@ -142,6 +142,6 @@ def test_decode_all_extracted_apk_charts():
         assert chart.id > 0
         assert len(chart.id_label) > 0
         assert len(chart.interactions) > 0
-        # Re-encode roundtrip check
-        re_encoded = encode_beatmap_interactions(chart)
-        assert len(re_encoded) > 0
+        # Detached copy drops retained source bytes, so equality proves canonical coverage
+        detached = BeatmapInteractionsTemplate.model_validate(chart.model_dump())
+        assert encode_beatmap_interactions(detached) == raw
