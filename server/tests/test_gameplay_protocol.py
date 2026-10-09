@@ -28,7 +28,7 @@ async def test_protocol_sync_records_gameplay_and_leaderboard(setup_multiplayer_
     body = {
         "cinta": p1.cinta,
         "audits": [
-            {"event": "RhythmGameEnded_SharplaAudit", "song_id": "starter_song_02", "score": 49600, "accuracy": 0.99}
+            {"event": "RhythmGameEnded_SharplaAudit", "song_id": "song_test_proto_01", "score": 49600, "accuracy": 0.99}
         ],
     }
     sync_res = await handler.handle(header, body)
@@ -36,7 +36,7 @@ async def test_protocol_sync_records_gameplay_and_leaderboard(setup_multiplayer_
 
     # 2. Requisita Leaderboard via protocolo SpaceApe
     lb_hdr = ClientHeader(service="syncservice", command="LeaderboardWithViews_Req", clide=p1.clide)
-    lb_body = {"cinta": p1.cinta, "leaderboardName": "starter_song_02", "friendsOnly": False}
+    lb_body = {"cinta": p1.cinta, "leaderboardName": "song_test_proto_01", "friendsOnly": False}
     lb_res = await handler.handle(lb_hdr, lb_body)
     assert lb_res["status"] == 200
     assert len(lb_res["results"]) >= 1

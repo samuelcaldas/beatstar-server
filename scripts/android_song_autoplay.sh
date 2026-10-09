@@ -1,5 +1,5 @@
 #!/bin/sh
-# Automated Beatstar Complete Song Autoplay inside Android Emulator
+# Automated Beatstar Complete Song Autoplay inside Android Device / Emulator
 set -e
 
 HOST="${1:-10.0.2.2}"
@@ -7,13 +7,17 @@ PORT="${2:-8080}"
 CINTA="${3:-676d4d53-f0cb-41c6-8c27-4bb3c3c3c905}"
 
 echo "=========================================================="
-echo " Beatstar Song Autoplay Runner - Android Emulator Context"
+echo " Beatstar Song Autoplay Runner - Android Device Context"
 echo " Target: http://${HOST}:${PORT}/gateway"
 echo " Player Cinta: ${CINTA}"
 echo "=========================================================="
 
 post_gateway() {
     payload="$1"
+    if command -v curl >/dev/null 2>&1; then
+        curl -s -X POST -H "Content-Type: application/json" -d "$payload" "http://${HOST}:${PORT}/gateway"
+        return
+    fi
     len=${#payload}
     req="POST /gateway HTTP/1.1\r\nHost: ${HOST}:${PORT}\r\nContent-Type: application/json\r\nContent-Length: ${len}\r\nConnection: close\r\n\r\n${payload}"
     (printf "%b" "$req"; sleep 0.4) | toybox nc "${HOST}" "${PORT}" | tail -n 1
@@ -117,7 +121,7 @@ echo "      - Moedas Acumuladas: ${COINS} 🪙"
 
 echo ""
 echo "=========================================================="
-echo "🎉 SUCESSO: Música concluída no emulador Android!"
+echo "🎉 SUCESSO: Música concluída no dispositivo Android!"
 echo "   Pontuação Máxima Diamond Perfect: ${TOTAL_SCORE} pts"
 echo "=========================================================="
 exit 0
