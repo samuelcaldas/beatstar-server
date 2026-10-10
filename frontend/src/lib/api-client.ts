@@ -58,20 +58,30 @@ export interface ApiClientOptions {
 type QueryValue = string | number | boolean | null | undefined;
 type Method = "GET" | "POST" | "PATCH" | "DELETE";
 
+interface RequestPayload {
+  query?: Record<string, QueryValue>;
+  body?: unknown;
+  form?: Record<string, string>;
+  /** Set only for login: no session or CSRF cookie exists yet, and a 401 means bad credentials. */
+  anonymous?: boolean;
+}
+
 export interface ApiClient {
   get<T = unknown>(path: string, query?: Record<string, QueryValue>): Promise<T>;
   post<T = unknown>(path: string, body?: unknown): Promise<T>;
+  postForm<T = unknown>(path: string, fields: Record<string, string>): Promise<T>;
   patch<T = unknown>(path: string, body?: unknown): Promise<T>;
   delete<T = unknown>(path: string, body?: unknown): Promise<T>;
 }
 
 export function createApiClient(options: ApiClientOptions): ApiClient {
-  const request = <T>(method: Method, path: string, payload?: { query?: Record<string, QueryValue>; body?: unknown }) =>
+  const request = <T>(method: Method, path: string, payload?: RequestPayload) =>
     send<T>(options, method, path, payload);
 
   return {
     get: (path, query) => request("GET", path, { query }),
     post: (path, body) => request("POST", path, { body }),
+    postForm: (path, fields) => request("POST", path, { form: fields, anonymous: true }),
     patch: (path, body) => request("PATCH", path, { body }),
     delete: (path, body) => request("DELETE", path, { body }),
   };
@@ -81,21 +91,14 @@ async function send<T>(
   options: ApiClientOptions,
   method: Method,
   path: string,
-  payload: { query?: Record<string, QueryValue>; body?: unknown } = {},
+  payload: RequestPayload = {},
 ): Promise<T> {
   const headers = new Headers();
-  if (method !== "GET") {
-    const token = options.readCookie(CSRF_COOKIE);
-    if (!token) {
-      throw new MissingCsrfTokenError("Token CSRF ausente; recarregue a página e entre novamente");
-    }
-    headers.set(CSRF_HEADER, token);
+  const anonymous = payload.anonymous === true;
+  if (method !== "GET" && !anonymous) {
+    headers.set(CSRF_HEADER, requireCsrfToken(options));
   }
-  let body: string | undefined;
-  if (payload.body !== undefined) {
-    headers.set("Content-Type", "application/json");
-    body = JSON.stringify(payload.body);
-  }
+  const body = encodeBody(payload, headers);
 
   const url = buildUrl(options.baseUrl, path, payload.query);
   let response: Response;
@@ -108,7 +111,25 @@ async function send<T>(
   if (response.ok) {
     return response.status === 204 ? (undefined as T) : ((await response.json()) as T);
   }
-  throw await toError(response, options);
+  throw await toError(response, options, anonymous);
+}
+
+function requireCsrfToken(options: ApiClientOptions): string {
+  const token = options.readCookie(CSRF_COOKIE);
+  if (!token) {
+    throw new MissingCsrfTokenError("Token CSRF ausente; recarregue a página e entre novamente");
+  }
+  return token;
+}
+
+function encodeBody(payload: RequestPayload, headers: Headers): string | undefined {
+  if (payload.form !== undefined) {
+    headers.set("Content-Type", "application/x-www-form-urlencoded");
+    return new URLSearchParams(payload.form).toString();
+  }
+  if (payload.body === undefined) return undefined;
+  headers.set("Content-Type", "application/json");
+  return JSON.stringify(payload.body);
 }
 
 function buildUrl(baseUrl: string, path: string, query?: Record<string, QueryValue>): string {
@@ -121,12 +142,12 @@ function buildUrl(baseUrl: string, path: string, query?: Record<string, QueryVal
   return `${baseUrl}${path}${suffix ? `?${suffix}` : ""}`;
 }
 
-async function toError(response: Response, options: ApiClientOptions): Promise<ApiError> {
+async function toError(response: Response, options: ApiClientOptions, anonymous: boolean): Promise<ApiError> {
   const document = await readJson(response);
   const detail = typeof document?.detail === "string" ? document.detail : `Erro HTTP ${response.status}`;
 
   if (response.status === 401) {
-    options.onUnauthorized?.();
+    if (!anonymous) options.onUnauthorized?.();
     return new UnauthorizedError(response.status, detail);
   }
   if (response.status === 409) {

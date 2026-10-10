@@ -165,3 +165,31 @@ describe("error mapping", () => {
     expect(failure).toBeInstanceOf(NetworkError);
   });
 });
+
+describe("login is the only write that works before a session exists", () => {
+  it("posts credentials as form-encoded fields without requiring a CSRF cookie", async () => {
+    const fetchImpl = fakeFetch(new Response(null, { status: 204 }));
+    const client = clientWith(fetchImpl, { readCookie: cookies({}) });
+
+    await client.postForm("/auth/login", { username: "admin@example.com", password: "s3cret" });
+
+    const init = fetchImpl.mock.calls[0]?.[1];
+    expect(sentHeaders(fetchImpl).get("Content-Type")).toBe("application/x-www-form-urlencoded");
+    expect(String(init?.body)).toBe("username=admin%40example.com&password=s3cret");
+    expect(sentHeaders(fetchImpl).has("X-CSRF-Token")).toBe(false);
+  });
+
+  it("maps a rejected login to UnauthorizedError and does not trigger the session-expired handler", async () => {
+    const onUnauthorized = vi.fn();
+    const fetchImpl = fakeFetch(jsonResponse(401, { detail: "Credenciais inválidas" }));
+    const client = clientWith(fetchImpl, { readCookie: cookies({}), onUnauthorized });
+
+    const failure = await client
+      .postForm("/auth/login", { username: "a@example.com", password: "wrong" })
+      .catch((e) => e);
+
+    expect(failure).toBeInstanceOf(UnauthorizedError);
+    expect((failure as Error).message).toBe("Credenciais inválidas");
+    expect(onUnauthorized).not.toHaveBeenCalled();
+  });
+});
