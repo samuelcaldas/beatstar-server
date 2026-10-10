@@ -23,6 +23,7 @@ from server.commerce.service import CommerceService
 from server.config import ServerSettings, settings
 from server.gameplay.router import build_gameplay_router
 from server.gameplay.service import GameplayService
+from server.handlers.onboarding_handler import router as onboarding_router
 from server.gateway.dispatcher import GatewayDispatcher
 from server.assets.client_adapters import SOURCE_ONLY, ClientAdapterFactory
 from server.assets.ingest import AssetLimits, MediaProbe, WaveformGenerator
@@ -139,6 +140,7 @@ def create_app(
         app.state.client_adapter = ClientAdapterFactory.default().create(SOURCE_ONLY)
         swept_storage = app.state.asset_storage
     app.include_router(core_router)
+    app.include_router(onboarding_router)
     app.include_router(
         build_commerce_router(CommerceService(), repository),
         prefix="/api/commerce",
