@@ -16,6 +16,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from server.admin.auth import build_admin_router
 from server.admin.database import create_admin_engine, create_admin_session_maker
 from server.admin.settings import AdminAuthSettings
+from server.admin.ui import build_admin_ui_router
 from server.api_routes import core_router
 from server.commerce.router import build_commerce_router
 from server.commerce.service import CommerceService
@@ -50,6 +51,11 @@ def default_database_path() -> str:
     return settings.database_url[len(prefix):]
 
 
+def default_admin_ui_directory() -> Path:
+    """Returns the export directory produced by the frontend build (frontend/out at the repository root)."""
+    return Path(__file__).resolve().parent.parent / "frontend" / "out"
+
+
 def admin_settings_from_environment(server_settings: ServerSettings) -> AdminAuthSettings | None:
     """Builds administrator settings from configuration, or None when no secret is configured.
 
@@ -77,6 +83,7 @@ def create_app(
     asset_root: Path | None = None,
     media_probe: MediaProbe | None = None,
     waveform: WaveformGenerator | None = None,
+    admin_ui_directory: Path | None = None,
 ) -> FastAPI:
     """Builds an application whose routes and lifespan use one injected database.
 
@@ -144,6 +151,7 @@ def create_app(
     )
     if resolved_admin is not None:
         app.include_router(build_admin_router(resolved_admin, admin_session_maker))
+        app.include_router(build_admin_ui_router(admin_ui_directory or default_admin_ui_directory()))
     resolved_cors = settings.cors_origins if cors_origins is None else cors_origins
     if resolved_cors:
         app.add_middleware(
