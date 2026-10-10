@@ -72,6 +72,7 @@ class ApkPatcher:
         enable_ads: bool = True,
         rewarded_ad_unit: str | None = None,
         interstitial_ad_unit: str | None = None,
+        server_url: str | None = None,
     ):
         self.apk_path = apk_path.resolve()
         self.output_apk = output_apk.resolve()
@@ -81,6 +82,7 @@ class ApkPatcher:
         self.enable_ads = enable_ads
         self.rewarded_ad_unit = rewarded_ad_unit
         self.interstitial_ad_unit = interstitial_ad_unit
+        self.server_url = server_url
         self.apktool_jar = self.tools_dir / "apktool" / "apktool.jar"
         self.work_dir = self.output_apk.parent / "apk_patch_work"
 
@@ -276,6 +278,12 @@ def main() -> None:
         default=None,
         help="Custom interstitial ad unit ID",
     )
+    parser.add_argument(
+        "--server-url",
+        type=str,
+        default=None,
+        help="URL do servidor de backend para configuração",
+    )
     # Feature Flags de Compras e Loja
     parser.add_argument("--disable-iap", dest="enable_iap", action="store_false", default=True, help="Desabilita IAP")
     parser.add_argument("--disable-shop", dest="enable_shop", action="store_false", default=True, help="Desabilita loja")
@@ -294,6 +302,7 @@ def main() -> None:
         enable_ads=args.enable_ads,
         rewarded_ad_unit=args.rewarded_ad_unit,
         interstitial_ad_unit=args.interstitial_ad_unit,
+        server_url=args.server_url,
     )
     patcher.run()
 
