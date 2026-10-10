@@ -24,6 +24,7 @@ from server.config import ServerSettings, settings
 from server.gameplay.router import build_gameplay_router
 from server.gameplay.service import GameplayService
 from server.handlers.onboarding_handler import router as onboarding_router
+from server.player_auth.store import PlayerTicketStore
 from server.gateway.dispatcher import GatewayDispatcher
 from server.assets.client_adapters import SOURCE_ONLY, ClientAdapterFactory
 from server.assets.ingest import AssetLimits, MediaProbe, WaveformGenerator
@@ -101,12 +102,13 @@ def create_app(
     """
     resolved_path = database_path or default_database_path()
     resolved_admin = admin_settings or admin_settings_from_environment(settings)
-    database = DatabaseManager(resolved_path)
-    commerce_service = CommerceService()
-    dispatcher = GatewayDispatcher(database, commerce_service)
-    repository = PlayerRepository(database)
     admin_engine = create_admin_engine(resolved_path)
     admin_session_maker = create_admin_session_maker(admin_engine)
+    database = DatabaseManager(resolved_path)
+    commerce_service = CommerceService()
+    ticket_store = PlayerTicketStore(admin_session_maker, settings.session_expiration_hours * 3600)
+    dispatcher = GatewayDispatcher(database, ticket_store, commerce_service)
+    repository = PlayerRepository(database)
 
     swept_storage: AssetStorage | None = None
 

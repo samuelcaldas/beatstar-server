@@ -1,9 +1,12 @@
 """Unit tests for user service and session management."""
 
 import pytest
+from server.admin.database import create_admin_engine, create_admin_session_maker
 from server.handlers.session_handler import SessionHandler
+from server.player_auth.store import PlayerTicketStore
 from server.models.headers import ClientHeader
 from server.storage.database import DatabaseManager
+from server.storage.migrations.runner import upgrade_to_head
 from server.storage.player_repository import PlayerRepository
 
 
@@ -12,9 +15,12 @@ async def test_session_handler_new_player(tmp_path):
     db_file = str(tmp_path / "test.db")
     db_manager = DatabaseManager(db_file)
     await db_manager.initialize()
+    upgrade_to_head(db_file)
+    engine = create_admin_engine(db_file)
+    store = PlayerTicketStore(create_admin_session_maker(engine), lifetime_seconds=3600)
     repo = PlayerRepository(db_manager)
 
-    handler = SessionHandler(repo)
+    handler = SessionHandler(repo, store)
     client_hdr = ClientHeader(service="userservice", rpcthing="rpc-1")
     body = {"all_in_one_login": {"cinta": "676d4d53-f0cb-41c6-8c27-4bb3c3c3c905"}}
 

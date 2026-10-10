@@ -3,12 +3,15 @@
 import pytest
 from httpx import ASGITransport, AsyncClient
 from server.app import app, db_manager
+from server.app_factory import default_database_path
+from server.storage.migrations.runner import upgrade_to_head
 
 
 @pytest.fixture(autouse=True)
 async def setup_database():
-    """Initializes database schema before tests."""
+    """Initializes legacy tables and applies migrations, as the application lifespan does at startup."""
     await db_manager.initialize()
+    upgrade_to_head(default_database_path())
 
 
 @pytest.mark.asyncio
