@@ -24,6 +24,7 @@ from server.config import ServerSettings, settings
 from server.gameplay.router import build_gameplay_router
 from server.gameplay.service import GameplayService
 from server.handlers.onboarding_handler import router as onboarding_router
+from server.player_auth.policy import PlayerTicketPolicy
 from server.player_auth.store import PlayerTicketStore
 from server.gateway.dispatcher import GatewayDispatcher
 from server.assets.client_adapters import SOURCE_ONLY, ClientAdapterFactory
@@ -86,6 +87,7 @@ def create_app(
     media_probe: MediaProbe | None = None,
     waveform: WaveformGenerator | None = None,
     admin_ui_directory: Path | None = None,
+    player_ticket_enforcement: bool | None = None,
 ) -> FastAPI:
     """Builds an application whose routes and lifespan use one injected database.
 
@@ -107,7 +109,13 @@ def create_app(
     database = DatabaseManager(resolved_path)
     commerce_service = CommerceService()
     ticket_store = PlayerTicketStore(admin_session_maker, settings.session_expiration_hours * 3600)
-    dispatcher = GatewayDispatcher(database, ticket_store, commerce_service)
+    enforce_tickets = (
+        settings.feature_flag_player_ticket_enforcement_enabled
+        if player_ticket_enforcement is None
+        else player_ticket_enforcement
+    )
+    ticket_policy = PlayerTicketPolicy(ticket_store, enforce_tickets)
+    dispatcher = GatewayDispatcher(database, ticket_store, ticket_policy, commerce_service)
     repository = PlayerRepository(database)
 
     swept_storage: AssetStorage | None = None
@@ -133,6 +141,7 @@ def create_app(
     app.state.database = database
     app.state.dispatcher = dispatcher
     app.state.admin_session_maker = admin_session_maker
+    app.state.player_ticket_store = ticket_store
     register_song_error_handlers(app)
     register_asset_error_handlers(app)
     if resolved_admin is not None:
@@ -145,12 +154,12 @@ def create_app(
     app.include_router(core_router)
     app.include_router(onboarding_router)
     app.include_router(
-        build_commerce_router(commerce_service, repository),
+        build_commerce_router(commerce_service, repository, ticket_policy),
         prefix="/api/commerce",
         tags=["commerce"],
     )
     app.include_router(
-        build_gameplay_router(GameplayService(database), repository),
+        build_gameplay_router(GameplayService(database), repository, ticket_policy),
         prefix="/api/gameplay",
         tags=["gameplay"],
     )

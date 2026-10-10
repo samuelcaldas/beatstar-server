@@ -97,6 +97,10 @@ class ServerSettings(BaseSettings):
         default=True,
         alias="FEATURE_FLAG_COSMETICS_ENABLED",
     )
+    feature_flag_player_ticket_enforcement_enabled: bool = Field(
+        default=False,
+        alias="FEATURE_FLAG_PLAYER_TICKET_ENFORCEMENT_ENABLED",
+    )
 
 
 

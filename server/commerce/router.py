@@ -3,11 +3,12 @@
 from __future__ import annotations
 
 from typing import Any
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, Request
 from pydantic import BaseModel
 from server.admin.auth import AdministrationAccess, require_csrf
 from server.commerce.models import CurrencyType
 from server.commerce.service import CommerceService
+from server.player_auth.policy import TICKET_HEADER, PlayerTicketPolicy
 from server.storage.player_repository import PlayerRepository
 
 
@@ -28,9 +29,11 @@ class PurchasePayload(BaseModel):
 
 
 def build_commerce_router(
-    commerce_service: CommerceService, player_repository: PlayerRepository
+    commerce_service: CommerceService,
+    player_repository: PlayerRepository,
+    ticket_policy: PlayerTicketPolicy,
 ) -> APIRouter:
-    """Builds commerce routes bound to one service and one player repository."""
+    """Builds commerce routes bound to one service, one player repository and one ticket policy."""
     router = APIRouter()
 
     @router.get("/flags")
@@ -44,8 +47,9 @@ def build_commerce_router(
         return [p.model_dump() for p in commerce_service.catalog.list_all()]
 
     @router.get("/wallet/{cinta}")
-    async def get_wallet(cinta: str) -> dict[str, Any]:
+    async def get_wallet(cinta: str, request: Request) -> dict[str, Any]:
         """Retrieves player wallet balance and unlocked items."""
+        await ticket_policy.authorize(request.headers.get(TICKET_HEADER), cinta, "commerce.wallet")
         profile = await player_repository.get_by_cinta(cinta)
         if not profile:
             raise HTTPException(status_code=404, detail="Jogador não encontrado")
@@ -58,8 +62,9 @@ def build_commerce_router(
         }
 
     @router.post("/purchase")
-    async def execute_purchase(payload: PurchasePayload) -> dict[str, Any]:
+    async def execute_purchase(payload: PurchasePayload, request: Request) -> dict[str, Any]:
         """Executes catalog item purchase on behalf of player."""
+        await ticket_policy.authorize(request.headers.get(TICKET_HEADER), payload.cinta, "commerce.purchase")
         profile = await player_repository.get_by_cinta(payload.cinta)
         if not profile:
             raise HTTPException(status_code=404, detail="Jogador não encontrado")

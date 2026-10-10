@@ -3,9 +3,10 @@
 from __future__ import annotations
 
 from typing import Any
-from fastapi import APIRouter, HTTPException, Query
+from fastapi import APIRouter, HTTPException, Query, Request
 from pydantic import BaseModel
 from server.gameplay.service import GameplayService
+from server.player_auth.policy import TICKET_HEADER, PlayerTicketPolicy
 from server.storage.player_repository import PlayerRepository
 
 
@@ -22,14 +23,20 @@ class FriendAddPayload(BaseModel):
 
 
 def build_gameplay_router(
-    gameplay_service: GameplayService, player_repository: PlayerRepository
+    gameplay_service: GameplayService,
+    player_repository: PlayerRepository,
+    ticket_policy: PlayerTicketPolicy,
 ) -> APIRouter:
-    """Builds gameplay routes bound to one service and one player repository."""
+    """Builds gameplay routes bound to one service, one player repository and one ticket policy.
+
+    Leaderboards stay public; every route that acts on one player's data checks the ticket.
+    """
     router = APIRouter()
 
     @router.get("/progression/{cinta}")
-    async def get_progression(cinta: str) -> dict[str, Any]:
+    async def get_progression(cinta: str, request: Request) -> dict[str, Any]:
         """Retrieves player journey venue, stars, and unlock progression."""
+        await ticket_policy.authorize(request.headers.get(TICKET_HEADER), cinta, "gameplay.progression")
         profile = await player_repository.get_by_cinta(cinta)
         if not profile:
             raise HTTPException(status_code=404, detail="Jogador não encontrado")
@@ -68,8 +75,9 @@ def build_gameplay_router(
         return [e.model_dump() for e in entries]
 
     @router.post("/scores/submit")
-    async def submit_score(payload: ScoreSubmitPayload) -> dict[str, Any]:
+    async def submit_score(payload: ScoreSubmitPayload, request: Request) -> dict[str, Any]:
         """Submits song performance and triggers progression / rival challenges."""
+        await ticket_policy.authorize(request.headers.get(TICKET_HEADER), payload.cinta, "gameplay.scores")
         profile = await player_repository.get_by_cinta(payload.cinta)
         if not profile:
             raise HTTPException(status_code=404, detail="Jogador não encontrado")
@@ -80,13 +88,15 @@ def build_gameplay_router(
         return result
 
     @router.get("/friends/{cinta}")
-    async def list_friends(cinta: str) -> list[dict[str, Any]]:
+    async def list_friends(cinta: str, request: Request) -> list[dict[str, Any]]:
         """Lists confirmed friends for a player."""
+        await ticket_policy.authorize(request.headers.get(TICKET_HEADER), cinta, "gameplay.friends")
         return await gameplay_service.multiplayer.list_friends(cinta)
 
     @router.post("/friends/add")
-    async def add_friend(payload: FriendAddPayload) -> dict[str, Any]:
+    async def add_friend(payload: FriendAddPayload, request: Request) -> dict[str, Any]:
         """Adds a friend by cinta UUID or clide."""
+        await ticket_policy.authorize(request.headers.get(TICKET_HEADER), payload.player_cinta, "gameplay.friends")
         success = await gameplay_service.multiplayer.add_friend(
             payload.player_cinta, payload.friend_identifier
         )
@@ -95,8 +105,9 @@ def build_gameplay_router(
         return {"success": True, "message": "Amizade estabelecida com sucesso."}
 
     @router.get("/brags/{cinta}")
-    async def list_brags(cinta: str) -> list[dict[str, Any]]:
+    async def list_brags(cinta: str, request: Request) -> list[dict[str, Any]]:
         """Retrieves pending rival challenges sent to player."""
+        await ticket_policy.authorize(request.headers.get(TICKET_HEADER), cinta, "gameplay.brags")
         brags = await gameplay_service.brags.get_pending_brags(cinta)
         return [b.model_dump() for b in brags]
 
