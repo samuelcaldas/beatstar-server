@@ -88,6 +88,7 @@ def create_app(
     waveform: WaveformGenerator | None = None,
     admin_ui_directory: Path | None = None,
     player_ticket_enforcement: bool | None = None,
+    cors_origin_regex: str | None = None,
 ) -> FastAPI:
     """Builds an application whose routes and lifespan use one injected database.
 
@@ -173,10 +174,12 @@ def create_app(
         )
         app.include_router(build_admin_ui_router(admin_ui_directory or default_admin_ui_directory()))
     resolved_cors = settings.cors_origins if cors_origins is None else cors_origins
-    if resolved_cors:
+    resolved_regex = settings.cors_origin_regex if cors_origin_regex is None else cors_origin_regex
+    if resolved_cors or resolved_regex:
         app.add_middleware(
             CORSMiddleware,
             allow_origins=resolved_cors,
+            allow_origin_regex=resolved_regex or None,
             allow_credentials=True,
             allow_methods=["GET", "POST", "PUT", "PATCH", "DELETE"],
             allow_headers=["Content-Type", "X-CSRF-Token"],
