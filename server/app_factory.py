@@ -27,6 +27,7 @@ from server.handlers.onboarding_handler import router as onboarding_router
 from server.player_auth.policy import PlayerTicketPolicy
 from server.player_auth.store import PlayerTicketStore
 from server.gateway.dispatcher import GatewayDispatcher
+from server.gateway.tcp_listener import TcpSocketGatewayServer
 from server.assets.client_adapters import SOURCE_ONLY, ClientAdapterFactory
 from server.assets.ingest import AssetLimits, MediaProbe, WaveformGenerator
 from server.assets.probes import default_media_probe
@@ -117,21 +118,32 @@ def create_app(
     )
     ticket_policy = PlayerTicketPolicy(ticket_store, enforce_tickets)
     dispatcher = GatewayDispatcher(database, ticket_store, ticket_policy, commerce_service)
+    tcp_gateway = TcpSocketGatewayServer(
+        dispatcher=dispatcher,
+        host=settings.host,
+        port=settings.tcp_gateway_port,
+    )
     repository = PlayerRepository(database)
 
     swept_storage: AssetStorage | None = None
 
     @asynccontextmanager
     async def lifespan(app: FastAPI):
-        """Initializes legacy tables, applies migrations, sweeps abandoned uploads, and disposes the admin engine on exit."""
+        """Initializes storage and starts configured gateway services."""
         await database.initialize()
         await asyncio.to_thread(upgrade_to_head, resolved_path)
         if swept_storage is not None:
             await asyncio.to_thread(
                 swept_storage.sweep_stale_staging, app.state.asset_limits.staging_max_age_seconds
             )
-        yield
-        await admin_engine.dispose()
+        if settings.tcp_gateway_enabled:
+            await tcp_gateway.start()
+        try:
+            yield
+        finally:
+            if settings.tcp_gateway_enabled:
+                await tcp_gateway.stop()
+            await admin_engine.dispose()
 
     app = FastAPI(
         title="Beatstar Private Server",
@@ -141,6 +153,7 @@ def create_app(
     )
     app.state.database = database
     app.state.dispatcher = dispatcher
+    app.state.tcp_gateway = tcp_gateway
     app.state.admin_session_maker = admin_session_maker
     app.state.player_ticket_store = ticket_store
     register_song_error_handlers(app)

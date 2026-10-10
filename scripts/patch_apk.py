@@ -2,7 +2,7 @@
 """APK Patching Tool for Beatstar.
 
 Decompiles APK resources with Apktool, injects permissive network-security-config.xml,
-configures Google Ads App ID, patches metadata ad unit IDs, rebuilds and signs APK.
+configures debug mode, patches metadata gateway host and libil2cpp port, signs with apksigner.
 """
 
 from __future__ import annotations
@@ -13,12 +13,15 @@ import re
 import shutil
 import subprocess
 import sys
+import zipfile
 from pathlib import Path
 
 try:
     from scripts.patch_ads_metadata import MetadataAdPatcher
+    from scripts.patch_il2cpp import Il2CppBinaryPatcher
 except ImportError:
     from patch_ads_metadata import MetadataAdPatcher
+    from patch_il2cpp import Il2CppBinaryPatcher
 
 
 class ManifestPatcher:
@@ -50,6 +53,19 @@ class ManifestPatcher:
         )
         self._write_manifest(new_content)
 
+    def enable_debugging(self) -> None:
+        content = self._read_manifest()
+        match = re.search(r"<application\b([^>]*)>", content)
+        if not match:
+            raise RuntimeError("Tag <application> não encontrada!")
+        attrs = match.group(1)
+        if "debuggable" not in attrs:
+            attrs += ' android:debuggable="true"'
+        new_content = (
+            content[: match.start()] + f"<application{attrs}>" + content[match.end() :]
+        )
+        self._write_manifest(new_content)
+
     def set_google_ads_app_id(self, app_id: str) -> None:
         content = self._read_manifest()
         pattern = r'(<meta-data\s+android:name="com\.google\.android\.gms\.ads\.APPLICATION_ID"\s+android:value=")[^"]*(")'
@@ -59,150 +75,12 @@ class ManifestPatcher:
         self._write_manifest(new_content)
 
 
-class ApkPatcher:
-    """Automates decoding, modifying, building, and signing Android APK."""
+class ApkSignerHelper:
+    """Manages debug keystore generation, zipalign, and apksigner."""
 
-    def __init__(
-        self,
-        apk_path: Path,
-        output_apk: Path,
-        tools_dir: Path,
-        patch_dir: Path,
-        ads_app_id: str | None = None,
-        enable_ads: bool = True,
-        rewarded_ad_unit: str | None = None,
-        interstitial_ad_unit: str | None = None,
-        server_url: str | None = None,
-    ):
-        self.apk_path = apk_path.resolve()
-        self.output_apk = output_apk.resolve()
+    def __init__(self, tools_dir: Path) -> None:
         self.tools_dir = tools_dir.resolve()
-        self.patch_dir = patch_dir.resolve()
-        self.ads_app_id = ads_app_id
-        self.enable_ads = enable_ads
-        self.rewarded_ad_unit = rewarded_ad_unit
-        self.interstitial_ad_unit = interstitial_ad_unit
-        self.server_url = server_url
-        self.apktool_jar = self.tools_dir / "apktool" / "apktool.jar"
-        self.work_dir = self.output_apk.parent / "apk_patch_work"
-
-    def validate(self) -> None:
-        if not self.apk_path.exists():
-            raise FileNotFoundError(f"APK não encontrado: {self.apk_path}")
-        if not self.apktool_jar.exists():
-            raise FileNotFoundError(
-                f"Apktool não encontrado em {self.apktool_jar}."
-            )
-
-    def decode_apk(self) -> None:
-        print(f"[*] Decodificando recursos de {self.apk_path.name} com Apktool...")
-        if self.work_dir.exists():
-            shutil.rmtree(self.work_dir)
-        cmd = [
-            "java",
-            "-jar",
-            str(self.apktool_jar),
-            "d",
-            "-f",
-            "-s",
-            str(self.apk_path),
-            "-o",
-            str(self.work_dir),
-        ]
-        proc = subprocess.run(cmd, capture_output=True, text=True)
-        if proc.returncode != 0:
-            raise RuntimeError(f"Falha ao decodificar APK:\n{proc.stderr}")
-        print("[+] Recursos decodificados com sucesso!")
-
-    def inject_network_security(self) -> None:
-        print("[*] Injetando network_security_config.xml...")
-        res_xml = self.work_dir / "res" / "xml"
-        res_xml.mkdir(parents=True, exist_ok=True)
-        config_source = self.patch_dir / "network_security_config.xml"
-        shutil.copy(config_source, res_xml / "network_security_config.xml")
-        patcher = ManifestPatcher(self.work_dir / "AndroidManifest.xml")
-        patcher.enable_cleartext_traffic()
-        print("[+] AndroidManifest.xml atualizado com segurança permissiva!")
-
-    def inject_ads_configuration(self) -> None:
-        if not self.ads_app_id:
-            return
-        print(f"[*] Injetando Google Ads App ID: {self.ads_app_id}...")
-        patcher = ManifestPatcher(self.work_dir / "AndroidManifest.xml")
-        patcher.set_google_ads_app_id(self.ads_app_id)
-        print("[+] Google Ads App ID injetado com sucesso no Manifest!")
-
-    def patch_metadata_ad_units(self) -> None:
-        if not self.rewarded_ad_unit and not self.interstitial_ad_unit:
-            return
-        meta_path = (
-            self.work_dir
-            / "assets"
-            / "bin"
-            / "Data"
-            / "Managed"
-            / "Metadata"
-            / "global-metadata.dat"
-        )
-        if not meta_path.exists():
-            return
-        print("[*] Aplicando patch de Ad Units no global-metadata.dat...")
-        ad_patcher = MetadataAdPatcher(meta_path)
-        ad_patcher.patch(
-            rewarded_id=self.rewarded_ad_unit,
-            interstitial_id=self.interstitial_ad_unit,
-        )
-        print("[+] Ad Units patched no global-metadata.dat!")
-
-    def patch_gateway_url(self) -> None:
-        """Replace the production gateway hostname with private server host in global-metadata.dat.
-
-        The string pool in global-metadata.dat holds the gateway hostname as a null-terminated
-        string literal. The replacement is padded with null bytes to preserve the surrounding
-        offsets in the file so that IL2CPP string-table indices stay valid.
-
-        The production WebSocket gateway runs on port 8080 with cleartext (TLS is terminated
-        upstream at the CDN), matching our private server's HTTP endpoint. No port or SSL-flag
-        patch is required when the replacement host is reachable on port 8080.
-        """
-        if not self.server_url:
-            return
-        meta_path = (
-            self.work_dir
-            / "assets"
-            / "bin"
-            / "Data"
-            / "Managed"
-            / "Metadata"
-            / "global-metadata.dat"
-        )
-        if not meta_path.exists():
-            print("[!] global-metadata.dat not found, skipping gateway patch")
-            return
-
-        ORIGINAL_HOST = b"socket-gateway.prod.flamingo.newbirds.net"
-        replacement = self.server_url.encode("ascii")
-        if len(replacement) > len(ORIGINAL_HOST):
-            raise ValueError(
-                f"Replacement host '{self.server_url}' ({len(replacement)}B) is longer "
-                f"than original '{ORIGINAL_HOST.decode()}' ({len(ORIGINAL_HOST)}B). "
-                "Choose a shorter host."
-            )
-
-        padded = replacement + b"\x00" * (len(ORIGINAL_HOST) - len(replacement))
-        with open(meta_path, "rb") as f:
-            data = f.read()
-
-        if ORIGINAL_HOST not in data:
-            print(f"[!] Gateway hostname not found in metadata, skipping patch")
-            return
-
-        count = data.count(ORIGINAL_HOST)
-        patched = data.replace(ORIGINAL_HOST, padded)
-        with open(meta_path, "wb") as f:
-            f.write(patched)
-        print(f"[+] Gateway hostname patched ({count} occurrence(s)): "
-              f"'{ORIGINAL_HOST.decode()}' -> '{self.server_url}'")
+        self.keystore = self._ensure_keystore()
 
     def _ensure_keystore(self) -> Path:
         keystore_path = self.tools_dir / "debug.keystore"
@@ -210,152 +88,159 @@ class ApkPatcher:
             return keystore_path
         print("[*] Gerando debug keystore...")
         cmd_key = [
-            "keytool",
-            "-genkeypair",
-            "-v",
-            "-keystore",
-            str(keystore_path),
-            "-alias",
-            "androiddebugkey",
-            "-keyalg",
-            "RSA",
-            "-keysize",
-            "2048",
-            "-validity",
-            "10000",
-            "-storepass",
-            "android",
-            "-keypass",
-            "android",
-            "-dname",
-            "CN=Android Debug,O=Android,C=US",
+            "keytool", "-genkeypair", "-v", "-keystore", str(keystore_path),
+            "-alias", "androiddebugkey", "-keyalg", "RSA", "-keysize", "2048",
+            "-validity", "10000", "-storepass", "android", "-keypass", "android",
+            "-dname", "CN=Android Debug,O=Android,C=US",
         ]
         subprocess.run(cmd_key, check=True, capture_output=True)
         return keystore_path
 
-    def build_and_sign(self) -> None:
-        print("[*] Reconstruindo APK com Apktool...")
-        unsigned_apk = self.work_dir.parent / "unsigned.apk"
-        cmd_b = [
-            "java",
-            "-jar",
-            str(self.apktool_jar),
-            "b",
-            str(self.work_dir),
-            "-o",
-            str(unsigned_apk),
-        ]
-        proc = subprocess.run(cmd_b, capture_output=True, text=True)
-        if proc.returncode != 0:
-            raise RuntimeError(f"Falha ao reconstruir APK:\n{proc.stderr}")
-        keystore = self._ensure_keystore()
-        print("[*] Assinando APK...")
+    def align_and_sign(self, unsigned_apk: Path, output_apk: Path) -> None:
+        """Runs zipalign and apksigner for V2/V3 signature schemes."""
+        aligned_apk = unsigned_apk.parent / f"aligned_{unsigned_apk.name}"
+        if aligned_apk.exists():
+            aligned_apk.unlink()
+        cmd_align = ["zipalign", "-p", "-f", "4", str(unsigned_apk), str(aligned_apk)]
+        subprocess.run(cmd_align, check=True, capture_output=True)
         cmd_sign = [
-            "jarsigner",
-            "-verbose",
-            "-sigalg",
-            "SHA256withRSA",
-            "-digestalg",
-            "SHA-256",
-            "-keystore",
-            str(keystore),
-            "-storepass",
-            "android",
-            str(unsigned_apk),
-            "androiddebugkey",
+            "apksigner", "sign", "--ks", str(self.keystore),
+            "--ks-pass", "pass:android", "--key-pass", "pass:android",
+            "--ks-key-alias", "androiddebugkey", "--out", str(output_apk),
+            str(aligned_apk),
         ]
         subprocess.run(cmd_sign, check=True, capture_output=True)
-        self.output_apk.parent.mkdir(parents=True, exist_ok=True)
-        shutil.move(str(unsigned_apk), str(self.output_apk))
+        if aligned_apk.exists():
+            aligned_apk.unlink()
+
+
+class SplitApkPatcher:
+    """Patches native library port in split config APK."""
+
+    def __init__(self, split_path: Path, port: int, signer: ApkSignerHelper) -> None:
+        self.split_path = split_path.resolve()
+        self.port = port
+        self.signer = signer
+
+    def patch_and_sign(self, output_path: Path) -> None:
+        """Extracts libil2cpp.so, patches port instruction, and repackages split APK."""
+        print(f"[*] Aplicando patch de porta ({self.port}) no split {self.split_path.name}...")
+        work_dir = output_path.parent / "split_work"
+        if work_dir.exists():
+            shutil.rmtree(work_dir)
+        work_dir.mkdir(parents=True, exist_ok=True)
+        with zipfile.ZipFile(self.split_path, "r") as zf:
+            zf.extractall(work_dir)
+        so_path = work_dir / "lib" / "arm64-v8a" / "libil2cpp.so"
+        if so_path.exists():
+            patcher = Il2CppBinaryPatcher(so_path)
+            patcher.patch_port(port=self.port)
+        unsigned = output_path.parent / "unsigned_split.apk"
+        self._create_zip(work_dir, unsigned)
+        self.signer.align_and_sign(unsigned, output_path)
+        if unsigned.exists():
+            unsigned.unlink()
+        shutil.rmtree(work_dir)
+        print(f"[✓] Split APK gerado com sucesso: {output_path}")
+
+    @staticmethod
+    def _create_zip(source_dir: Path, target_zip: Path) -> None:
+        with zipfile.ZipFile(target_zip, "w", zipfile.ZIP_DEFLATED) as zf:
+            for root, _, files in os.walk(source_dir):
+                for f in files:
+                    full_p = Path(root) / f
+                    arcname = full_p.relative_to(source_dir)
+                    zf.write(full_p, arcname)
+
+
+class BaseApkPatcher:
+    """Decodes, modifies and rebuilds base Beatstar APK."""
+
+    def __init__(
+        self,
+        apk_path: Path,
+        output_apk: Path,
+        tools_dir: Path,
+        patch_dir: Path,
+        host: str = "192.168.1.68",
+        signer: ApkSignerHelper | None = None,
+    ) -> None:
+        self.apk_path = apk_path.resolve()
+        self.output_apk = output_apk.resolve()
+        self.tools_dir = tools_dir.resolve()
+        self.patch_dir = patch_dir.resolve()
+        self.host = host
+        self.signer = signer or ApkSignerHelper(self.tools_dir)
+        self.apktool_jar = self.tools_dir / "apktool" / "apktool.jar"
+        self.work_dir = self.output_apk.parent / "base_patch_work"
+
+    def decode_apk(self) -> None:
+        print(f"[*] Decodificando recursos de {self.apk_path.name}...")
         if self.work_dir.exists():
             shutil.rmtree(self.work_dir)
-        print(f"[✓] APK gerado com sucesso em: {self.output_apk}")
+        cmd = ["java", "-jar", str(self.apktool_jar), "d", "-f", "-s", str(self.apk_path), "-o", str(self.work_dir)]
+        subprocess.run(cmd, check=True, capture_output=True)
+
+    def inject_modifications(self) -> None:
+        print("[*] Injetando network_security_config e modo debuggable...")
+        res_xml = self.work_dir / "res" / "xml"
+        res_xml.mkdir(parents=True, exist_ok=True)
+        shutil.copy(self.patch_dir / "network_security_config.xml", res_xml / "network_security_config.xml")
+        patcher = ManifestPatcher(self.work_dir / "AndroidManifest.xml")
+        patcher.enable_cleartext_traffic()
+        patcher.enable_debugging()
+        self._patch_metadata()
+
+    def _patch_metadata(self) -> None:
+        meta_p = self.work_dir / "assets" / "bin" / "Data" / "Managed" / "Metadata" / "global-metadata.dat"
+        if not meta_p.exists():
+            return
+        print(f"[*] Aplicando patch de gateway host ({self.host}) no global-metadata.dat...")
+        meta_patcher = MetadataAdPatcher(meta_p)
+        meta_patcher.patch(socket_gateway_host=self.host)
+
+    def build_and_sign(self) -> None:
+        print("[*] Reconstruindo base APK com Apktool...")
+        unsigned = self.output_apk.parent / "unsigned_base.apk"
+        cmd_b = ["java", "-jar", str(self.apktool_jar), "b", str(self.work_dir), "-o", str(unsigned)]
+        subprocess.run(cmd_b, check=True, capture_output=True)
+        self.signer.align_and_sign(unsigned, self.output_apk)
+        if unsigned.exists():
+            unsigned.unlink()
+        if self.work_dir.exists():
+            shutil.rmtree(self.work_dir)
+        print(f"[✓] Base APK gerado com sucesso: {self.output_apk}")
 
     def run(self) -> None:
-        self.validate()
         self.decode_apk()
-        self.inject_network_security()
-        self.inject_ads_configuration()
-        self.patch_metadata_ad_units()
-        self.patch_gateway_url()
+        self.inject_modifications()
         self.build_and_sign()
 
 
 def main() -> None:
-    parser = argparse.ArgumentParser(description="Beatstar APK Patcher")
-    parser.add_argument("--apk", type=Path, required=True, help="Caminho do APK base")
-    parser.add_argument(
-        "--output-apk",
-        type=Path,
-        default=Path("dist/beatstar-patched.apk"),
-        help="Caminho do APK de saída",
-    )
-    parser.add_argument(
-        "--tools-dir",
-        type=Path,
-        default=Path("tools"),
-        help="Diretório de ferramentas",
-    )
-    parser.add_argument(
-        "--patch-dir",
-        type=Path,
-        default=Path("client_patch"),
-        help="Diretório de patches",
-    )
-    parser.add_argument(
-        "--ads-app-id", type=str, default=None, help="Google Ads / AdMob App ID"
-    )
-    parser.add_argument(
-        "--enable-ads",
-        action="store_true",
-        default=True,
-        help="Habilita sistema de anúncios",
-    )
-    parser.add_argument(
-        "--disable-ads",
-        dest="enable_ads",
-        action="store_false",
-        help="Desabilita anúncios",
-    )
-    parser.add_argument(
-        "--rewarded-ad-unit",
-        type=str,
-        default=None,
-        help="Custom rewarded ad unit ID",
-    )
-    parser.add_argument(
-        "--interstitial-ad-unit",
-        type=str,
-        default=None,
-        help="Custom interstitial ad unit ID",
-    )
-    parser.add_argument(
-        "--server-url",
-        type=str,
-        default=None,
-        help="URL do servidor de backend para configuração",
-    )
-    # Feature Flags de Compras e Loja
-    parser.add_argument("--disable-iap", dest="enable_iap", action="store_false", default=True, help="Desabilita IAP")
-    parser.add_argument("--disable-shop", dest="enable_shop", action="store_false", default=True, help="Desabilita loja")
-    parser.add_argument("--disable-lootboxes", dest="enable_lootboxes", action="store_false", default=True, help="Desabilita caixas")
-    parser.add_argument("--disable-premium", dest="enable_premium", action="store_false", default=True, help="Desabilita Tour Pass")
-    parser.add_argument("--disable-cosmetics", dest="enable_cosmetics", action="store_false", default=True, help="Desabilita cosméticos")
+    parser = argparse.ArgumentParser(description="Beatstar APK & Split Patcher")
+    parser.add_argument("--apk", type=Path, required=True, help="Path para base.apk")
+    parser.add_argument("--split-apk", type=Path, default=None, help="Path para split_config.arm64_v8a.apk")
+    parser.add_argument("--host", type=str, default="192.168.1.68", help="IP do servidor na LAN")
+    parser.add_argument("--port", type=int, default=9090, help="Porta TCP do SocketGateway")
+    parser.add_argument("--output-dir", type=Path, default=Path("dist"), help="Diretório de saída")
+    parser.add_argument("--tools-dir", type=Path, default=Path("tools"), help="Diretório de ferramentas")
+    parser.add_argument("--patch-dir", type=Path, default=Path("client_patch"), help="Diretório de patches")
     args = parser.parse_args()
 
-
-    patcher = ApkPatcher(
-        apk_path=args.apk,
-        output_apk=args.output_apk,
-        tools_dir=args.tools_dir,
-        patch_dir=args.patch_dir,
-        ads_app_id=args.ads_app_id,
-        enable_ads=args.enable_ads,
-        rewarded_ad_unit=args.rewarded_ad_unit,
-        interstitial_ad_unit=args.interstitial_ad_unit,
-        server_url=args.server_url,
+    args.output_dir.mkdir(parents=True, exist_ok=True)
+    signer = ApkSignerHelper(args.tools_dir)
+    base_out = args.output_dir / "base-patched.apk"
+    base_patcher = BaseApkPatcher(
+        apk_path=args.apk, output_apk=base_out, tools_dir=args.tools_dir,
+        patch_dir=args.patch_dir, host=args.host, signer=signer,
     )
-    patcher.run()
+    base_patcher.run()
+
+    if args.split_apk and args.split_apk.exists():
+        split_out = args.output_dir / "split_config.arm64_v8a-patched.apk"
+        split_patcher = SplitApkPatcher(args.split_apk, port=args.port, signer=signer)
+        split_patcher.patch_and_sign(split_out)
 
 
 if __name__ == "__main__":
