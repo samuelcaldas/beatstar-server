@@ -50,3 +50,8 @@ data/
 
 # Playwright artifacts and screen captures
 .playwright-mcp/
+
+# Next.js admin UI build outputs
+frontend/.next/
+frontend/out/
+frontend/next-env.d.ts

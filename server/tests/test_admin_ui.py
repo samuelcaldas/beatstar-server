@@ -92,3 +92,13 @@ async def test_missing_export_directory_is_not_found_rather_than_a_crash(tmp_pat
     response = await _get(app, "/admin/")
 
     assert response.status_code == 404
+
+
+async def test_missing_hashed_asset_is_404_not_the_shell(tmp_path):
+    """Breaks if a stale client after a deploy receives HTML where JavaScript was expected."""
+    app = _app(tmp_path, _build_output(tmp_path / "out"))
+
+    response = await _get(app, "/admin/_next/static/gone-after-deploy.js")
+
+    assert response.status_code == 404
+    assert "admin-shell" not in response.text
