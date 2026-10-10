@@ -6,8 +6,10 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 Beatstar reverse-engineering toolkit and Python private-server emulator.
 Use established libraries for authentication, and an ORM with SQLite.
-These remain requirements: current storage uses direct aiosqlite SQL,
-and current authentication is a stub rather than a framework integration.
+These remain requirements. Administrator authentication uses fastapi-users
+with SQLAlchemy, and music and asset storage use SQLAlchemy with Alembic-style
+migrations. Player storage (PlayerRepository) still uses direct aiosqlite SQL,
+and player ticket authentication is not yet validated.
 
 Read docs/README.md for the documentation index. Before changing protocol
 behavior, consult docs/sot/protocol_specification.md; distinguish the
@@ -67,21 +69,33 @@ with the Nginx reverse proxy; NPM configuration is applied manually.
 
 ## Architecture
 
-- server/app.py owns FastAPI startup, database initialization, and HTTP
-  endpoints. Both /gateway and /socket-gateway feed GatewayDispatcher;
-  there is no standalone TCP listener.
+- server/app_factory.py create_app() builds the FastAPI app with an injected
+  database, routers, and optional admin and asset services. server/app.py
+  exposes the module-level app for uvicorn. Both /gateway and /socket-gateway
+  feed GatewayDispatcher; there is no standalone TCP listener.
 - /gateway accepts JSON header/body envelopes. /socket-gateway accepts
   length-prefixed binary frames over HTTP. WireCodec handles framing;
   the dispatcher currently decodes the header and body as JSON, not
   Protobuf. Gzip encoding exists, but decoding does not decompress.
 - GatewayDispatcher routes service names to handlers for login, CMS,
   profiles, sync, and songs. Handlers use Pydantic models and
-  PlayerRepository; DatabaseManager creates the SQLite schema.
+  PlayerRepository; DatabaseManager creates the legacy player tables.
 - Login establishes Cinta/Clide player identity and returns a random
   authentication ticket. Incoming tickets are not currently validated.
   JWT configuration does not imply implemented JWT authentication.
-- CMS, songs, and asset responses are mocks. Sync handles the song-ended
-  audit by updating player rewards; it does not verify gameplay or scores.
+- CMS responses point to real binary resources when the asset store has
+  them. Catalog entries without a binary fall back to placeholder JSON URLs
+  with synthetic hashes, and CMSResourceItem defaults to a mock hash.
+  Sync handles the song-ended audit by updating player rewards; it does
+  not verify gameplay or scores.
+- Admin login is mounted only when ADMIN_AUTH_SECRET is set.
+  /api/commerce/grant and POST /api/commerce/flags are not yet protected.
+  Planned: require a superuser session. Player routes (/wallet, /purchase,
+  /api/gameplay) are not yet protected. Planned: behind a feature flag that
+  starts disabled, validate an opaque server-side ticket with expiry, and
+  bind it to the same cinta. Enable it only after real client traffic is
+  captured and confirms that the ticket is echoed on later requests.
+  GET /api/commerce/flags and /catalog stay public.
 - API tests initialize the application's configured database. Run them in
   a disposable container without the development data mount. Handler
   tests use temporary databases; wire tests primarily exercise helpers.
