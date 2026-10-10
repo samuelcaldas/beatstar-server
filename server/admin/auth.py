@@ -5,7 +5,8 @@ Public registration is not mounted. Administrators are created only by the provi
 
 import secrets
 import uuid
-from collections.abc import AsyncIterator
+from collections.abc import AsyncIterator, Callable
+from dataclasses import dataclass
 from typing import Annotated
 
 from fastapi import APIRouter, Depends, HTTPException, Request, Response
@@ -69,10 +70,18 @@ def require_csrf(request: Request) -> None:
         raise HTTPException(status_code=403, detail="Token CSRF inválido")
 
 
+@dataclass(frozen=True)
+class AdministrationAccess:
+    """The administration router and the dependency other routers use to require a superuser session."""
+
+    router: APIRouter
+    current_superuser: Callable[..., object]
+
+
 def build_admin_router(
     settings: AdminAuthSettings, session_maker: async_sessionmaker[AsyncSession]
 ) -> APIRouter:
-    """Builds the administrator authentication router bound to one settings object and database.
+    """Builds the administrator authentication router; see build_administration_access.
 
     Args:
         settings: Validated administrator authentication configuration.
@@ -80,6 +89,21 @@ def build_admin_router(
 
     Returns:
         A router mounting login, logout and the current-administrator endpoint under /api/admin.
+    """
+    return build_administration_access(settings, session_maker).router
+
+
+def build_administration_access(
+    settings: AdminAuthSettings, session_maker: async_sessionmaker[AsyncSession]
+) -> AdministrationAccess:
+    """Builds the administrator routes and the superuser dependency bound to one database.
+
+    Args:
+        settings: Validated administrator authentication configuration.
+        session_maker: Factory for sessions on the administration database.
+
+    Returns:
+        The /api/admin router and the dependency that authenticates a superuser session.
     """
     limiter = LoginAttemptLimiter(settings.login_max_attempts, settings.login_window_seconds)
 
@@ -186,4 +210,4 @@ def build_admin_router(
             require_csrf,
         )
     )
-    return router
+    return AdministrationAccess(router=router, current_superuser=users.current_user(active=True, superuser=True))

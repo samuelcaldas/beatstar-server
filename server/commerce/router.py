@@ -3,8 +3,9 @@
 from __future__ import annotations
 
 from typing import Any
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel
+from server.admin.auth import AdministrationAccess, require_csrf
 from server.commerce.models import CurrencyType
 from server.commerce.service import CommerceService
 from server.storage.player_repository import PlayerRepository
@@ -37,15 +38,6 @@ def build_commerce_router(
         """Retrieves current commerce and monetization feature flags."""
         return commerce_service.flags.get_flags()
 
-    @router.post("/flags")
-    async def update_flag(payload: FlagUpdatePayload) -> dict[str, Any]:
-        """Updates a commerce feature flag dynamically at runtime."""
-        try:
-            commerce_service.flags.set_flag(payload.flag_name, payload.enabled)
-            return {"success": True, "flags": commerce_service.flags.get_flags()}
-        except KeyError as exc:
-            raise HTTPException(status_code=400, detail=str(exc)) from exc
-
     @router.get("/catalog")
     async def get_catalog() -> list[dict[str, Any]]:
         """Lists all store and economy catalog items."""
@@ -65,16 +57,6 @@ def build_commerce_router(
             "unlocked_songs": profile.unlocked_songs,
         }
 
-    @router.post("/grant")
-    async def grant_funds(payload: GrantPayload) -> dict[str, Any]:
-        """Grants coins or gems directly to player profile."""
-        profile = await player_repository.get_by_cinta(payload.cinta)
-        if not profile:
-            raise HTTPException(status_code=404, detail="Jogador não encontrado")
-        commerce_service.wallet.credit(profile, payload.currency, payload.amount)
-        await player_repository.save(profile)
-        return {"success": True, "coins": profile.coins, "gems": profile.gems}
-
     @router.post("/purchase")
     async def execute_purchase(payload: PurchasePayload) -> dict[str, Any]:
         """Executes catalog item purchase on behalf of player."""
@@ -87,5 +69,40 @@ def build_commerce_router(
             return res.model_dump()
         except Exception as exc:
             raise HTTPException(status_code=400, detail=str(exc)) from exc
+
+    return router
+
+
+def build_commerce_administration_router(
+    commerce_service: CommerceService,
+    player_repository: PlayerRepository,
+    access: AdministrationAccess,
+) -> APIRouter:
+    """Builds the commerce writes that change funds or flags; every route needs a superuser session and CSRF.
+
+    Mounting this router only when administration is configured keeps these writes unreachable otherwise.
+    Dependencies are listed on each route so the session is checked before the CSRF token.
+    """
+    router = APIRouter()
+    guards = [Depends(access.current_superuser), Depends(require_csrf)]
+
+    @router.post("/flags", dependencies=guards)
+    async def update_flag(payload: FlagUpdatePayload) -> dict[str, Any]:
+        """Updates a commerce feature flag dynamically at runtime."""
+        try:
+            commerce_service.flags.set_flag(payload.flag_name, payload.enabled)
+            return {"success": True, "flags": commerce_service.flags.get_flags()}
+        except KeyError as exc:
+            raise HTTPException(status_code=400, detail=str(exc)) from exc
+
+    @router.post("/grant", dependencies=guards)
+    async def grant_funds(payload: GrantPayload) -> dict[str, Any]:
+        """Grants coins or gems directly to player profile."""
+        profile = await player_repository.get_by_cinta(payload.cinta)
+        if not profile:
+            raise HTTPException(status_code=404, detail="Jogador não encontrado")
+        commerce_service.wallet.credit(profile, payload.currency, payload.amount)
+        await player_repository.save(profile)
+        return {"success": True, "coins": profile.coins, "gems": profile.gems}
 
     return router

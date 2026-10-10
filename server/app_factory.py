@@ -13,12 +13,12 @@ from contextlib import asynccontextmanager
 from pathlib import Path
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from server.admin.auth import build_admin_router
+from server.admin.auth import build_administration_access
 from server.admin.database import create_admin_engine, create_admin_session_maker
 from server.admin.settings import AdminAuthSettings
 from server.admin.ui import build_admin_ui_router
 from server.api_routes import core_router
-from server.commerce.router import build_commerce_router
+from server.commerce.router import build_commerce_administration_router, build_commerce_router
 from server.commerce.service import CommerceService
 from server.config import ServerSettings, settings
 from server.gameplay.router import build_gameplay_router
@@ -102,7 +102,8 @@ def create_app(
     resolved_path = database_path or default_database_path()
     resolved_admin = admin_settings or admin_settings_from_environment(settings)
     database = DatabaseManager(resolved_path)
-    dispatcher = GatewayDispatcher(database)
+    commerce_service = CommerceService()
+    dispatcher = GatewayDispatcher(database, commerce_service)
     repository = PlayerRepository(database)
     admin_engine = create_admin_engine(resolved_path)
     admin_session_maker = create_admin_session_maker(admin_engine)
@@ -142,7 +143,7 @@ def create_app(
     app.include_router(core_router)
     app.include_router(onboarding_router)
     app.include_router(
-        build_commerce_router(CommerceService(), repository),
+        build_commerce_router(commerce_service, repository),
         prefix="/api/commerce",
         tags=["commerce"],
     )
@@ -152,7 +153,13 @@ def create_app(
         tags=["gameplay"],
     )
     if resolved_admin is not None:
-        app.include_router(build_admin_router(resolved_admin, admin_session_maker))
+        access = build_administration_access(resolved_admin, admin_session_maker)
+        app.include_router(access.router)
+        app.include_router(
+            build_commerce_administration_router(commerce_service, repository, access),
+            prefix="/api/commerce",
+            tags=["commerce"],
+        )
         app.include_router(build_admin_ui_router(admin_ui_directory or default_admin_ui_directory()))
     resolved_cors = settings.cors_origins if cors_origins is None else cors_origins
     if resolved_cors:

@@ -64,13 +64,12 @@ async def test_commerce_api_endpoints(setup_test_player):
         flags = resp_flags.json()
         assert "shop_enabled" in flags
 
-        # 2. Update flag endpoint
+        # 2. POST is not mounted without administration; GET stays public (see test_commerce_administration)
         resp_update = await client.post(
             "/api/commerce/flags",
             json={"flag_name": "iap_enabled", "enabled": True},
         )
-        assert resp_update.status_code == 200
-        assert resp_update.json()["flags"]["iap_enabled"] is True
+        assert resp_update.status_code == 405
 
         # 3. Catalog endpoint
         resp_catalog = await client.get("/api/commerce/catalog")
@@ -87,7 +86,7 @@ async def test_commerce_api_endpoints(setup_test_player):
         wallet_data = resp_wallet.json()
         assert wallet_data["cinta"] == setup_test_player.cinta
 
-        # 5. Grant endpoint
+        # 5. Grant endpoint is not mounted without administration
         resp_grant = await client.post(
             "/api/commerce/grant",
             json={
@@ -96,5 +95,4 @@ async def test_commerce_api_endpoints(setup_test_player):
                 "amount": 100,
             },
         )
-        assert resp_grant.status_code == 200
-        assert resp_grant.json()["gems"] >= 545
+        assert resp_grant.status_code == 404

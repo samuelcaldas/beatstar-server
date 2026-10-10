@@ -24,9 +24,9 @@ from server.gameplay import GameplayService
 class GatewayDispatcher:
     """Dispatches requests to appropriate service handlers."""
 
-    def __init__(self, db_manager: DatabaseManager) -> None:
+    def __init__(self, db_manager: DatabaseManager, commerce_service: CommerceService | None = None) -> None:
         self.repository = PlayerRepository(db_manager)
-        self.commerce_service = CommerceService()
+        self.commerce_service = commerce_service or CommerceService()
         self.gameplay_service = GameplayService(db_manager)
         self.session_handler = SessionHandler(self.repository)
         self.cms_handler = CMSHandler()
