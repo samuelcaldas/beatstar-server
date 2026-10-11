@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import json
 import logging
+import secrets
 from typing import Any
 
 logger = logging.getLogger("beatstar.dispatcher")
@@ -27,21 +28,40 @@ from server.commerce import CommerceService
 from server.gameplay import GameplayService
 
 
+class _CompatibilityTicketStore:
+    """Ephemeral ticket store for direct dispatcher construction in legacy callers."""
+
+    def __init__(self) -> None:
+        self._tickets: dict[str, str] = {}
+
+    async def issue(self, cinta: str) -> str:
+        """Issues an in-memory ticket without changing the persistent schema."""
+        ticket = f"auth-{secrets.token_urlsafe(24)}"
+        self._tickets[ticket] = cinta
+        return ticket
+
+    async def resolve(self, ticket: str | None) -> str | None:
+        """Resolves a ticket issued by this compatibility adapter."""
+        return self._tickets.get(ticket) if ticket else None
+
+
 class GatewayDispatcher:
     """Dispatches requests to appropriate service handlers."""
 
     def __init__(
         self,
         db_manager: DatabaseManager,
-        ticket_store: PlayerTicketStore,
-        ticket_policy: PlayerTicketPolicy,
+        ticket_store: PlayerTicketStore | None = None,
+        ticket_policy: PlayerTicketPolicy | None = None,
         commerce_service: CommerceService | None = None,
     ) -> None:
         self.repository = PlayerRepository(db_manager)
-        self.ticket_policy = ticket_policy
+        compatibility_store = _CompatibilityTicketStore()
+        resolved_ticket_store = ticket_store or compatibility_store
+        self.ticket_policy = ticket_policy or PlayerTicketPolicy(resolved_ticket_store, False)
         self.commerce_service = commerce_service or CommerceService()
         self.gameplay_service = GameplayService(db_manager)
-        self.session_handler = SessionHandler(self.repository, ticket_store)
+        self.session_handler = SessionHandler(self.repository, resolved_ticket_store)
         self.cms_handler = CMSHandler()
         self.profile_handler = ProfileHandler(self.repository)
         self.sync_handler = SyncHandler(self.repository, self.commerce_service, self.gameplay_service)
