@@ -123,6 +123,16 @@ Change the generator for durable generation fixes; regeneration overwrites
 those outputs. Generated models are not proof that a command is supported
 by runtime handlers.
 
+Original APK behavior: record every finding about how the original
+client behaves (requests, tickets, config, timing) in docs/sot/ as it is
+discovered, with the artifact it came from. Decompile the original APK to
+gather clues before assuming client behavior. The decompiled outputs in
+decompiled/ and tools/ are git-ignored. Il2CppDumper needs a terminal:
+scripts/decompile.py runs it with stdin=DEVNULL, so it exits with code -6
+after writing dump.cs, script.json and DummyDll/. Check those outputs
+before rerunning. IL2CPP DummyDll method bodies are empty, so C# output
+shows signatures only.
+
 For client connection changes, read docs/sot/client_patching_guide.md.
 scripts/patch_apk.py and client_patch/ provide APK-patching and Frida paths.
 
