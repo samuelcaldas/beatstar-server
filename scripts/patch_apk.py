@@ -16,6 +16,9 @@ import sys
 import zipfile
 from pathlib import Path
 
+if __package__ in (None, ""):
+    sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
+
 try:
     from scripts.patch_ads_metadata import MetadataAdPatcher
     from scripts.patch_il2cpp import Il2CppBinaryPatcher
@@ -59,7 +62,13 @@ class ManifestPatcher:
         if not match:
             raise RuntimeError("Tag <application> não encontrada!")
         attrs = match.group(1)
-        if "debuggable" not in attrs:
+        attrs, replacements = re.subn(
+            r'\bandroid:debuggable\s*=\s*"[^"]*"',
+            'android:debuggable="true"',
+            attrs,
+            count=1,
+        )
+        if replacements == 0:
             attrs += ' android:debuggable="true"'
         new_content = (
             content[: match.start()] + f"<application{attrs}>" + content[match.end() :]
@@ -194,10 +203,11 @@ class BaseApkPatcher:
     def _patch_metadata(self) -> None:
         meta_p = self.work_dir / "assets" / "bin" / "Data" / "Managed" / "Metadata" / "global-metadata.dat"
         if not meta_p.exists():
-            return
+            raise FileNotFoundError(f"global-metadata.dat não encontrado: {meta_p}")
         print(f"[*] Aplicando patch de gateway host ({self.host}) no global-metadata.dat...")
         meta_patcher = MetadataAdPatcher(meta_p)
-        meta_patcher.patch(socket_gateway_host=self.host)
+        if not meta_patcher.patch(socket_gateway_host=self.host):
+            raise ValueError(f"Gateway host não foi alterado para {self.host!r}")
 
     def build_and_sign(self) -> None:
         print("[*] Reconstruindo base APK com Apktool...")

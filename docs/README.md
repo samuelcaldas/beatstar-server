@@ -15,6 +15,7 @@ Este diretório contém a documentação técnica, especificações de protocolo
 
 ### 2. Fontes de Verdade (`docs/sot/`)
 - [music_asset_contract.md](sot/music_asset_contract.md) - Registro de evidências dos assets musicais: presença, extração offline e decodificação de charts são observadas; vínculos e semântica nativa não são comprovados; exportação e reprodução Android estão BLOQUEADAS.
+- [android_tutorial_runtime_observations.md](sot/android_tutorial_runtime_observations.md) - Observações de execução Android do tutorial, estado multitouch e evidências ainda inconclusivas.
 - [protocol_specification.md](sot/protocol_specification.md) - Especificação completa do protocolo SpaceApe Sharpla e SocketGateway.
 - [decompilation_guide.md](sot/decompilation_guide.md) - Manual de extração de assets, IL2CPP dump e descompilação C#/Java.
 - [client_patching_guide.md](sot/client_patching_guide.md) - Instruções para patch de APK e injeção de hooks para conexão do cliente ao servidor privado.

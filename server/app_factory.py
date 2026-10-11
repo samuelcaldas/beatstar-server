@@ -8,6 +8,7 @@ touching the default data/ directory.
 from __future__ import annotations
 
 import asyncio
+import logging
 import os
 from contextlib import asynccontextmanager
 from pathlib import Path
@@ -41,6 +42,9 @@ from server.storage.player_repository import PlayerRepository
 
 # Configuração de timezone America/Sao_Paulo
 os.environ["TZ"] = settings.timezone
+
+# Configure beatstar package logging to be visible alongside uvicorn
+logging.getLogger("beatstar").setLevel(logging.DEBUG)
 
 
 def default_database_path() -> str:

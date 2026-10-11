@@ -44,6 +44,7 @@ class TcpSocketGatewayServer:
         """Reads framed binary messages and responds over persistent TCP connection."""
         peer = writer.get_extra_info("peername")
         logger.info("Nova conexão TCP recebida de %s", peer)
+        print(f"[TCP] New connection from {peer}", flush=True)
         try:
             await self._client_read_loop(reader, writer)
         except (asyncio.IncompleteReadError, ConnectionResetError):
@@ -62,7 +63,8 @@ class TcpSocketGatewayServer:
             len_bytes = await reader.readexactly(4)
             payload_len = int.from_bytes(len_bytes, byteorder="big")
             payload_bytes = await reader.readexactly(payload_len)
-            print(f"[TCP_RAW] Frame received: len={payload_len}, hex={payload_bytes[:64].hex()}", flush=True)
+            logger.debug("Received TCP frame (%d bytes)", payload_len)
+            print(f"[TCP] Frame received: {payload_len} bytes from {writer.get_extra_info('peername')}", flush=True)
             full_frame = len_bytes + payload_bytes
             resp_frame = await self.dispatcher.dispatch_wire_frame(full_frame)
             writer.write(resp_frame)
