@@ -1,7 +1,9 @@
+import subprocess
+import sys
 import tempfile
 from pathlib import Path
 import pytest
-from scripts.patch_apk import ManifestPatcher
+from scripts.patch_apk import BaseApkPatcher, ManifestPatcher
 from scripts.patch_ads_metadata import MetadataAdPatcher
 
 
@@ -65,3 +67,67 @@ def test_metadata_ad_patcher_replaces_units():
         assert MetadataAdPatcher.ORIGINAL_INTERSTITIAL not in content
     finally:
         path.unlink(missing_ok=True)
+
+
+def test_manifest_patcher_overrides_non_debuggable_manifest(tmp_path):
+    manifest = tmp_path / "AndroidManifest.xml"
+    manifest.write_text(
+        '<manifest><application android:debuggable="false"></application></manifest>'
+    )
+
+    ManifestPatcher(manifest).enable_debugging()
+
+    content = manifest.read_text()
+    assert 'android:debuggable="true"' in content
+    assert 'android:debuggable="false"' not in content
+
+
+def test_apk_patcher_help_runs_in_isolated_python():
+    script = Path(__file__).resolve().parents[2] / "scripts" / "patch_apk.py"
+
+    result = subprocess.run(
+        [sys.executable, "-I", str(script), "--help"],
+        capture_output=True,
+        check=False,
+        text=True,
+    )
+
+    assert result.returncode == 0
+    assert "Beatstar APK & Split Patcher" in result.stdout
+
+
+def create_base_patcher(tmp_path, host):
+    return BaseApkPatcher(
+        apk_path=tmp_path / "base.apk",
+        output_apk=tmp_path / "output" / "patched.apk",
+        tools_dir=tmp_path / "tools",
+        patch_dir=tmp_path / "patches",
+        host=host,
+        signer=object(),
+    )
+
+
+def test_base_apk_patcher_rejects_missing_metadata(tmp_path):
+    patcher = create_base_patcher(tmp_path, "192.168.1.68")
+    patcher.work_dir.mkdir(parents=True)
+
+    with pytest.raises(FileNotFoundError, match="global-metadata.dat"):
+        patcher._patch_metadata()
+
+
+def test_base_apk_patcher_rejects_unpatched_gateway_host(tmp_path):
+    patcher = create_base_patcher(tmp_path, "192.168.1.68")
+    metadata = (
+        patcher.work_dir
+        / "assets"
+        / "bin"
+        / "Data"
+        / "Managed"
+        / "Metadata"
+        / "global-metadata.dat"
+    )
+    metadata.parent.mkdir(parents=True)
+    metadata.write_bytes(b"metadata without gateway string")
+
+    with pytest.raises(ValueError, match="Gateway host"):
+        patcher._patch_metadata()

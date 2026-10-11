@@ -5,7 +5,7 @@ from httpx import ASGITransport, AsyncClient
 from server.admin.provision import provision_administrator
 from server.admin.settings import AdminAuthSettings
 from server.app_factory import admin_settings_from_environment, create_app
-from server.config import ServerSettings
+from server.config import ServerSettings, settings
 from server.models.player import PlayerProfile
 from server.storage.database import DatabaseManager
 from server.storage.player_repository import PlayerRepository
@@ -50,3 +50,20 @@ def test_blank_admin_secret_leaves_administration_unconfigured(monkeypatch):
     monkeypatch.setenv("ADMIN_AUTH_SECRET", "")
 
     assert admin_settings_from_environment(ServerSettings()) is None
+
+
+async def test_tcp_gateway_runs_with_application_lifespan(tmp_path, monkeypatch):
+    """Starts the configured TCP gateway with app startup and stops it on shutdown."""
+    monkeypatch.chdir(tmp_path)
+    monkeypatch.setattr(settings, "tcp_gateway_enabled", True)
+    monkeypatch.setattr(settings, "host", "127.0.0.1")
+    monkeypatch.setattr(settings, "tcp_gateway_port", 0)
+
+    app = create_app(database_path=str(tmp_path / "gateway.db"))
+
+    async with app.router.lifespan_context(app):
+        gateway = app.state.tcp_gateway
+        assert gateway.server is not None
+        assert gateway.server.sockets[0].getsockname()[1] > 0
+
+    assert gateway.server.is_serving() is False

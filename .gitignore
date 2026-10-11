@@ -33,6 +33,7 @@ __pycache__/
 # Reverse Engineering Outputs and Artifacts
 extracted/
 decompiled/
+tools
 tools/
 dump.cs
 script.json

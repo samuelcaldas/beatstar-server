@@ -19,6 +19,8 @@ class ServerSettings(BaseSettings):
 
     host: str = Field(default="0.0.0.0", alias="SERVER_HOST")
     port: int = Field(default=8080, alias="SERVER_PORT")
+    tcp_gateway_enabled: bool = Field(default=True, alias="TCP_GATEWAY_ENABLED")
+    tcp_gateway_port: int = Field(default=9099, alias="TCP_GATEWAY_PORT")
     environment: str = Field(default="development", alias="SERVER_ENVIRONMENT")
     debug: bool = Field(default=True, alias="DEBUG")
 
@@ -29,13 +31,13 @@ class ServerSettings(BaseSettings):
     )
 
     public_host: str = Field(
-        default="beatstar.dev.timoteo.mg.gov.br",
+        default="192.168.1.68",
         alias="GATEWAY_PUBLIC_HOST",
     )
     public_port: int = Field(default=8080, alias="GATEWAY_PUBLIC_PORT")
     use_ssl: bool = Field(default=False, alias="GATEWAY_USE_SSL")
     assets_base_url: str = Field(
-        default="http://beatstar.dev.timoteo.mg.gov.br:8080/assets",
+        default="http://192.168.1.68:8080/assets",
         alias="ASSETS_BASE_URL",
     )
 
