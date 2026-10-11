@@ -13,6 +13,8 @@ from server.handlers.session_handler import SessionHandler
 from server.handlers.songs_handler import SongsHandler
 from server.handlers.sync_handler import SyncHandler
 from server.models.headers import ClientHeader, ServerHeader
+from server.player_auth.policy import PlayerTicketPolicy
+from server.player_auth.store import PlayerTicketStore
 from server.storage.database import DatabaseManager
 from server.storage.player_repository import PlayerRepository
 
@@ -24,11 +26,18 @@ from server.gameplay import GameplayService
 class GatewayDispatcher:
     """Dispatches requests to appropriate service handlers."""
 
-    def __init__(self, db_manager: DatabaseManager) -> None:
+    def __init__(
+        self,
+        db_manager: DatabaseManager,
+        ticket_store: PlayerTicketStore,
+        ticket_policy: PlayerTicketPolicy,
+        commerce_service: CommerceService | None = None,
+    ) -> None:
         self.repository = PlayerRepository(db_manager)
-        self.commerce_service = CommerceService()
+        self.ticket_policy = ticket_policy
+        self.commerce_service = commerce_service or CommerceService()
         self.gameplay_service = GameplayService(db_manager)
-        self.session_handler = SessionHandler(self.repository)
+        self.session_handler = SessionHandler(self.repository, ticket_store)
         self.cms_handler = CMSHandler()
         self.profile_handler = ProfileHandler(self.repository)
         self.sync_handler = SyncHandler(self.repository, self.commerce_service, self.gameplay_service)
@@ -41,6 +50,8 @@ class GatewayDispatcher:
     ) -> tuple[ServerHeader, dict[str, Any]]:
         """Routes request based on service name."""
         service = header.service.lower()
+        if service != "userservice":
+            await self.ticket_policy.observe(header.authentication_ticket, service)
 
         if service == "userservice":
             res_body = await self.session_handler.handle(header, body)

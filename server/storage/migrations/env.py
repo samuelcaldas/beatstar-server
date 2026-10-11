@@ -4,6 +4,7 @@ from alembic import context
 from sqlalchemy import create_engine, event, pool
 from server.admin.models import Base
 from server.music import models as music_models  # noqa: F401  registers music tables on Base
+from server.player_auth import models as player_auth_models  # noqa: F401  registers player tickets on Base
 from server.storage.database import BUSY_TIMEOUT_MILLISECONDS
 
 config = context.config

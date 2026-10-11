@@ -41,6 +41,10 @@ class ServerSettings(BaseSettings):
 
     asset_storage_root: Path = Field(default=Path("data"), alias="ASSET_STORAGE_ROOT")
     cors_origins: list[str] = Field(default_factory=list, alias="CORS_ORIGINS")
+    cors_origin_regex: str = Field(
+        default=r"^https://([a-z0-9-]+\.)*dev\.timoteo\.mg\.gov\.br$",
+        alias="CORS_ORIGIN_REGEX",
+    )
 
     # Administration (separate from game tickets; admin routes stay unmounted without a secret)
     admin_auth_secret: SecretStr | None = Field(default=None, alias="ADMIN_AUTH_SECRET")
@@ -96,6 +100,10 @@ class ServerSettings(BaseSettings):
     feature_flag_cosmetics_enabled: bool = Field(
         default=True,
         alias="FEATURE_FLAG_COSMETICS_ENABLED",
+    )
+    feature_flag_player_ticket_enforcement_enabled: bool = Field(
+        default=False,
+        alias="FEATURE_FLAG_PLAYER_TICKET_ENFORCEMENT_ENABLED",
     )
 
 

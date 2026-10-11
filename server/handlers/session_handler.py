@@ -3,19 +3,20 @@
 from __future__ import annotations
 
 import time
-import uuid
 from typing import Any
 from server.handlers.base import BaseServiceHandler
 from server.models.headers import ClientHeader
 from server.models.player import CintaIdentifier, PlayerProfile
+from server.player_auth.store import PlayerTicketStore
 from server.storage.player_repository import PlayerRepository
 
 
 class SessionHandler(BaseServiceHandler):
     """Processes userservice requests (AllInOneLogin, Cinta resolution)."""
 
-    def __init__(self, repository: PlayerRepository) -> None:
+    def __init__(self, repository: PlayerRepository, ticket_store: PlayerTicketStore) -> None:
         self.repository = repository
+        self.ticket_store = ticket_store
 
     async def handle(
         self, header: ClientHeader, body: dict[str, Any]
@@ -30,7 +31,7 @@ class SessionHandler(BaseServiceHandler):
             profile = PlayerProfile(cinta=cinta_id.value)
             await self.repository.save(profile)
 
-        auth_ticket = f"auth-{uuid.uuid4().hex}"
+        auth_ticket = await self.ticket_store.issue(profile.cinta)
         return {
             "status": 200,
             "id": body.get("id", 1),

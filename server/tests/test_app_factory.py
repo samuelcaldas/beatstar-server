@@ -2,11 +2,16 @@
 
 from httpx import ASGITransport, AsyncClient
 
+from server.admin.provision import provision_administrator
+from server.admin.settings import AdminAuthSettings
 from server.app_factory import admin_settings_from_environment, create_app
 from server.config import ServerSettings
 from server.models.player import PlayerProfile
 from server.storage.database import DatabaseManager
 from server.storage.player_repository import PlayerRepository
+
+ADMIN_SECRET = "test-admin-secret-with-at-least-32-characters"
+ADMIN_PASSWORD = "correct horse battery staple"
 
 
 async def test_commerce_grant_writes_only_to_injected_database(tmp_path, monkeypatch):
@@ -19,12 +24,20 @@ async def test_commerce_grant_writes_only_to_injected_database(tmp_path, monkeyp
         PlayerProfile(cinta="factory-cinta", clide="factory", coins=10, gems=0)
     )
 
-    app = create_app(database_path=str(database_file))
-    async with AsyncClient(transport=ASGITransport(app=app), base_url="http://test") as client:
-        response = await client.post(
-            "/api/commerce/grant",
-            json={"cinta": "factory-cinta", "currency": "coins", "amount": 5},
-        )
+    settings = AdminAuthSettings(secret=ADMIN_SECRET, cookie_secure=False)
+    app = create_app(database_path=str(database_file), admin_settings=settings, asset_root=tmp_path / "u")
+    async with app.router.lifespan_context(app):
+        await provision_administrator(app.state.admin_session_maker, ADMIN_SECRET, "factory@example.com", ADMIN_PASSWORD)
+        async with AsyncClient(transport=ASGITransport(app=app), base_url="http://test") as client:
+            await client.post(
+                "/api/admin/auth/login",
+                data={"username": "factory@example.com", "password": ADMIN_PASSWORD},
+            )
+            response = await client.post(
+                "/api/commerce/grant",
+                json={"cinta": "factory-cinta", "currency": "coins", "amount": 5},
+                headers={"X-CSRF-Token": client.cookies.get("beatstar_admin_csrf")},
+            )
 
     assert response.status_code == 200
     stored = await PlayerRepository(database).get_by_cinta("factory-cinta")

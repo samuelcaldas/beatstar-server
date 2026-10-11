@@ -13,17 +13,19 @@ from contextlib import asynccontextmanager
 from pathlib import Path
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from server.admin.auth import build_admin_router
+from server.admin.auth import build_administration_access
 from server.admin.database import create_admin_engine, create_admin_session_maker
 from server.admin.settings import AdminAuthSettings
 from server.admin.ui import build_admin_ui_router
 from server.api_routes import core_router
-from server.commerce.router import build_commerce_router
+from server.commerce.router import build_commerce_administration_router, build_commerce_router
 from server.commerce.service import CommerceService
 from server.config import ServerSettings, settings
 from server.gameplay.router import build_gameplay_router
 from server.gameplay.service import GameplayService
 from server.handlers.onboarding_handler import router as onboarding_router
+from server.player_auth.policy import PlayerTicketPolicy
+from server.player_auth.store import PlayerTicketStore
 from server.gateway.dispatcher import GatewayDispatcher
 from server.assets.client_adapters import SOURCE_ONLY, ClientAdapterFactory
 from server.assets.ingest import AssetLimits, MediaProbe, WaveformGenerator
@@ -85,6 +87,8 @@ def create_app(
     media_probe: MediaProbe | None = None,
     waveform: WaveformGenerator | None = None,
     admin_ui_directory: Path | None = None,
+    player_ticket_enforcement: bool | None = None,
+    cors_origin_regex: str | None = None,
 ) -> FastAPI:
     """Builds an application whose routes and lifespan use one injected database.
 
@@ -101,11 +105,19 @@ def create_app(
     """
     resolved_path = database_path or default_database_path()
     resolved_admin = admin_settings or admin_settings_from_environment(settings)
-    database = DatabaseManager(resolved_path)
-    dispatcher = GatewayDispatcher(database)
-    repository = PlayerRepository(database)
     admin_engine = create_admin_engine(resolved_path)
     admin_session_maker = create_admin_session_maker(admin_engine)
+    database = DatabaseManager(resolved_path)
+    commerce_service = CommerceService()
+    ticket_store = PlayerTicketStore(admin_session_maker, settings.session_expiration_hours * 3600)
+    enforce_tickets = (
+        settings.feature_flag_player_ticket_enforcement_enabled
+        if player_ticket_enforcement is None
+        else player_ticket_enforcement
+    )
+    ticket_policy = PlayerTicketPolicy(ticket_store, enforce_tickets)
+    dispatcher = GatewayDispatcher(database, ticket_store, ticket_policy, commerce_service)
+    repository = PlayerRepository(database)
 
     swept_storage: AssetStorage | None = None
 
@@ -130,6 +142,7 @@ def create_app(
     app.state.database = database
     app.state.dispatcher = dispatcher
     app.state.admin_session_maker = admin_session_maker
+    app.state.player_ticket_store = ticket_store
     register_song_error_handlers(app)
     register_asset_error_handlers(app)
     if resolved_admin is not None:
@@ -142,23 +155,31 @@ def create_app(
     app.include_router(core_router)
     app.include_router(onboarding_router)
     app.include_router(
-        build_commerce_router(CommerceService(), repository),
+        build_commerce_router(commerce_service, repository, ticket_policy),
         prefix="/api/commerce",
         tags=["commerce"],
     )
     app.include_router(
-        build_gameplay_router(GameplayService(database), repository),
+        build_gameplay_router(GameplayService(database), repository, ticket_policy),
         prefix="/api/gameplay",
         tags=["gameplay"],
     )
     if resolved_admin is not None:
-        app.include_router(build_admin_router(resolved_admin, admin_session_maker))
+        access = build_administration_access(resolved_admin, admin_session_maker)
+        app.include_router(access.router)
+        app.include_router(
+            build_commerce_administration_router(commerce_service, repository, access),
+            prefix="/api/commerce",
+            tags=["commerce"],
+        )
         app.include_router(build_admin_ui_router(admin_ui_directory or default_admin_ui_directory()))
     resolved_cors = settings.cors_origins if cors_origins is None else cors_origins
-    if resolved_cors:
+    resolved_regex = settings.cors_origin_regex if cors_origin_regex is None else cors_origin_regex
+    if resolved_cors or resolved_regex:
         app.add_middleware(
             CORSMiddleware,
             allow_origins=resolved_cors,
+            allow_origin_regex=resolved_regex or None,
             allow_credentials=True,
             allow_methods=["GET", "POST", "PUT", "PATCH", "DELETE"],
             allow_headers=["Content-Type", "X-CSRF-Token"],
