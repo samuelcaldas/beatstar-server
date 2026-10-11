@@ -179,7 +179,7 @@ class BaseApkPatcher:
         self.tools_dir = tools_dir.resolve()
         self.patch_dir = patch_dir.resolve()
         self.host = host
-        self.signer = signer or ApkSignerHelper(self.tools_dir)
+        self.signer = signer
         self.apktool_jar = self.tools_dir / "apktool" / "apktool.jar"
         self.work_dir = self.output_apk.parent / "base_patch_work"
 
@@ -211,6 +211,8 @@ class BaseApkPatcher:
 
     def build_and_sign(self) -> None:
         print("[*] Reconstruindo base APK com Apktool...")
+        if self.signer is None:
+            self.signer = ApkSignerHelper(self.tools_dir)
         unsigned = self.output_apk.parent / "unsigned_base.apk"
         cmd_b = ["java", "-jar", str(self.apktool_jar), "b", str(self.work_dir), "-o", str(unsigned)]
         subprocess.run(cmd_b, check=True, capture_output=True)
@@ -225,6 +227,36 @@ class BaseApkPatcher:
         self.decode_apk()
         self.inject_modifications()
         self.build_and_sign()
+
+
+class ApkPatcher(BaseApkPatcher):
+    """Compatibility facade for the pre-split APK patcher API."""
+
+    def __init__(
+        self,
+        apk_path: Path,
+        output_apk: Path,
+        tools_dir: Path,
+        patch_dir: Path,
+        ads_app_id: str | None = None,
+        enable_ads: bool = True,
+        rewarded_ad_unit: str | None = None,
+        interstitial_ad_unit: str | None = None,
+        server_url: str | None = None,
+    ) -> None:
+        """Preserve legacy construction while routing to the base APK patcher."""
+        super().__init__(
+            apk_path=apk_path,
+            output_apk=output_apk,
+            tools_dir=tools_dir,
+            patch_dir=patch_dir,
+            host=server_url or "192.168.1.68",
+        )
+        self.server_url = server_url
+        self.ads_app_id = ads_app_id
+        self.enable_ads = enable_ads
+        self.rewarded_ad_unit = rewarded_ad_unit
+        self.interstitial_ad_unit = interstitial_ad_unit
 
 
 def main() -> None:
