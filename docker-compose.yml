@@ -17,12 +17,26 @@ services:
       - DATABASE_URL=sqlite+aiosqlite:///./data/beatstar.db
       - GATEWAY_PUBLIC_HOST=beatstar.dev.timoteo.mg.gov.br
       - GATEWAY_PUBLIC_PORT=8080
-      - ASSETS_BASE_URL=http://beatstar.dev.timoteo.mg.gov.br:8080/assets
+      - ASSETS_BASE_URL=https://beatstar.dev.timoteo.mg.gov.br:8080/assets
     volumes:
       - ./data:/app/data
       - ./server:/app/server
+      - ./certs:/app/certs:ro
+    command:
+      - python
+      - -m
+      - uvicorn
+      - server.app:app
+      - --host
+      - "0.0.0.0"
+      - --port
+      - "8080"
+      - --ssl-keyfile
+      - /app/certs/server.key
+      - --ssl-certfile
+      - /app/certs/server.crt
     healthcheck:
-      test: [ "CMD", "curl", "-f", "http://localhost:8080/health" ]
+      test: [ "CMD", "curl", "-fsk", "https://localhost:8080/health" ]
       interval: 30s
       timeout: 5s
       retries: 3

@@ -49,6 +49,32 @@ class SongRepository:
         songs = (await self._session.execute(statement)).scalars().all()
         return list(songs), int(total or 0)
 
+    async def list_charts(self, song_id: str) -> list[ChartRevision]:
+        """Returns every chart revision of the song, oldest first."""
+        statement = (
+            select(ChartRevision)
+            .where(ChartRevision.song_id == song_id)
+            .order_by(ChartRevision.revision_number)
+        )
+        return list((await self._session.execute(statement)).scalars().all())
+
+    async def find_by_beatmap(self, beatmap_id: int) -> Song | None:
+        """Returns the song already assigned to a beatmap identifier, if any."""
+        statement = select(Song).where(Song.beatmap_id == beatmap_id)
+        return (await self._session.execute(statement)).scalar_one_or_none()
+
+    async def next_chart_number(self, song_id: str) -> int:
+        """Returns the number the song's next chart revision will carry."""
+        current = await self._session.scalar(
+            select(func.max(ChartRevision.revision_number)).where(ChartRevision.song_id == song_id)
+        )
+        return int(current or 0) + 1
+
+    async def add_chart(self, chart: ChartRevision) -> None:
+        """Stages a chart revision; the caller commits and handles number collisions."""
+        self._session.add(chart)
+        await self._session.flush()
+
     async def update_if_current(self, song_id: str, expected_revision: int, changes: dict) -> bool:
         """Applies changes only while the stored revision still equals expected_revision.
 
@@ -78,7 +104,9 @@ class SongRepository:
         await self._session.delete(song)
         await self._session.flush()
 
-    async def add_audit(self, actor_id: uuid.UUID, action: str, song_id: str, changed: list[str] | None = None) -> None:
+    async def add_audit(
+        self, actor_id: uuid.UUID | None, action: str, song_id: str, changed: list[str] | None = None
+    ) -> None:
         """Records an administrator action; detail holds field names only, never values."""
         detail = json.dumps(sorted(changed)) if changed is not None else None
         self._session.add(

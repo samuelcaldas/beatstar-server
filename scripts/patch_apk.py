@@ -154,6 +154,56 @@ class ApkPatcher:
         )
         print("[+] Ad Units patched no global-metadata.dat!")
 
+    def patch_gateway_url(self) -> None:
+        """Replace the production gateway hostname with private server host in global-metadata.dat.
+
+        The string pool in global-metadata.dat holds the gateway hostname as a null-terminated
+        string literal. The replacement is padded with null bytes to preserve the surrounding
+        offsets in the file so that IL2CPP string-table indices stay valid.
+
+        The production WebSocket gateway runs on port 8080 with cleartext (TLS is terminated
+        upstream at the CDN), matching our private server's HTTP endpoint. No port or SSL-flag
+        patch is required when the replacement host is reachable on port 8080.
+        """
+        if not self.server_url:
+            return
+        meta_path = (
+            self.work_dir
+            / "assets"
+            / "bin"
+            / "Data"
+            / "Managed"
+            / "Metadata"
+            / "global-metadata.dat"
+        )
+        if not meta_path.exists():
+            print("[!] global-metadata.dat not found, skipping gateway patch")
+            return
+
+        ORIGINAL_HOST = b"socket-gateway.prod.flamingo.newbirds.net"
+        replacement = self.server_url.encode("ascii")
+        if len(replacement) > len(ORIGINAL_HOST):
+            raise ValueError(
+                f"Replacement host '{self.server_url}' ({len(replacement)}B) is longer "
+                f"than original '{ORIGINAL_HOST.decode()}' ({len(ORIGINAL_HOST)}B). "
+                "Choose a shorter host."
+            )
+
+        padded = replacement + b"\x00" * (len(ORIGINAL_HOST) - len(replacement))
+        with open(meta_path, "rb") as f:
+            data = f.read()
+
+        if ORIGINAL_HOST not in data:
+            print(f"[!] Gateway hostname not found in metadata, skipping patch")
+            return
+
+        count = data.count(ORIGINAL_HOST)
+        patched = data.replace(ORIGINAL_HOST, padded)
+        with open(meta_path, "wb") as f:
+            f.write(patched)
+        print(f"[+] Gateway hostname patched ({count} occurrence(s)): "
+              f"'{ORIGINAL_HOST.decode()}' -> '{self.server_url}'")
+
     def _ensure_keystore(self) -> Path:
         keystore_path = self.tools_dir / "debug.keystore"
         if keystore_path.exists():
@@ -227,6 +277,7 @@ class ApkPatcher:
         self.inject_network_security()
         self.inject_ads_configuration()
         self.patch_metadata_ad_units()
+        self.patch_gateway_url()
         self.build_and_sign()
 
 

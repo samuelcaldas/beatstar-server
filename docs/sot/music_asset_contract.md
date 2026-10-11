@@ -114,3 +114,12 @@ Delivery:
 
 Until those are shown, native export is unavailable and no publication path may claim Android compatibility.
 Internal, browser-only, and admin work may proceed against an explicitly internal chart schema.
+
+### Internal chart-library status (2026-10-10)
+
+Extracted Raksha charts can be retained as immutable revisions with SHA-256 fingerprints, and synthetic
+admin examples encode tap and drag interactions across all three lanes. The chart label `710-1` and
+beatmap `660` remain a candidate association only; import stores chart identities without inferring a
+verified game-song link. No Unity bundle is exported, no Wwise bank is decoded, and no candidate bundle artwork or
+audio is attached by this internal workflow; example covers are synthetic. These admin records are drafts and do not establish client
+compatibility or close the native export gate above.

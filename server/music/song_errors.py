@@ -24,3 +24,11 @@ class InvalidSongState(SongError):
 
 class SongInUse(SongError):
     """Raised when a hard delete would orphan assets, charts, jobs or releases."""
+
+
+class GameIdentifierInUse(SongError):
+    """Raised when another song already uses the game song or beatmap identifier."""
+
+
+class ChartNumberConflict(SongError):
+    """Raised when a concurrent writer took the chart revision number first; the caller retries."""

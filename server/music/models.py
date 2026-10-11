@@ -9,8 +9,11 @@ an administrator keeps the history of what happened.
 import time
 import uuid
 
+# fastapi_users.db must initialise before the SQLAlchemy extension it re-exports; imported in the
+# other order, its optional exports are silently skipped and admin models fail to load.
+import fastapi_users.db  # noqa: F401
 from fastapi_users_db_sqlalchemy.generics import GUID
-from sqlalchemy import CheckConstraint, ForeignKey, Integer, String, Text, UniqueConstraint
+from sqlalchemy import CheckConstraint, Float, ForeignKey, Index, Integer, String, Text, UniqueConstraint
 from sqlalchemy.orm import Mapped, mapped_column
 
 from server.storage.base import Base
@@ -35,6 +38,8 @@ class Song(Base):
     __tablename__ = "songs"
     __table_args__ = (
         CheckConstraint("status IN ('draft', 'published', 'archived')", name="ck_songs_status"),
+        Index("uq_songs_game_song_id", "game_song_id", unique=True),
+        Index("uq_songs_beatmap_id", "beatmap_id", unique=True),
     )
 
     id: Mapped[str] = mapped_column(String(36), primary_key=True, default=new_identifier)
@@ -43,6 +48,12 @@ class Song(Base):
     difficulty: Mapped[str] = mapped_column(
         String(16), nullable=False, default="normal", server_default="normal"
     )
+    game_song_id: Mapped[int | None] = mapped_column(Integer, nullable=True)
+    beatmap_id: Mapped[int | None] = mapped_column(Integer, nullable=True)
+    bpm: Mapped[float | None] = mapped_column(Float, nullable=True)
+    time_signature: Mapped[int | None] = mapped_column(Integer, nullable=True)
+    variant_label: Mapped[str | None] = mapped_column(String(64), nullable=True)
+    source: Mapped[str] = mapped_column(String(16), nullable=False, default="manual", server_default="manual")
     status: Mapped[str] = mapped_column(String(16), nullable=False, default="draft")
     revision: Mapped[int] = mapped_column(Integer, nullable=False, default=1)
     created_at: Mapped[int] = mapped_column(Integer, nullable=False, default=now_milliseconds)

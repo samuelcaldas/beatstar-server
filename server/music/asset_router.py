@@ -74,6 +74,15 @@ def build_asset_router(
         response.status_code = 201 if created else 200
         return AssetOut.model_validate(asset)
 
+    @router.get("/songs/{song_id}/assets", response_model=list[AssetOut])
+    async def list_song_assets(
+        song_id: str,
+        service: ServiceDependency,
+        _administrator: AdministratorDependency,
+    ) -> list[AssetOut]:
+        """Lists the verified media attached to a song, so the administration UI can preview it."""
+        return [AssetOut.model_validate(asset) for asset in await service.list_for_song(song_id)]
+
     @router.get("/assets/{asset_id}/content")
     async def read_asset_content(
         asset_id: str,

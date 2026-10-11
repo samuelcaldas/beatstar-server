@@ -8,9 +8,20 @@ from fastapi.responses import JSONResponse
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from server.admin.models import AdministratorUser
-from server.music.song_errors import InvalidSongState, RevisionConflict, SongInUse, SongNotFound
+from server.music.chart_document import ChartNote, summarize
+from server.music.models import ChartRevision
+from server.music.song_errors import (
+    ChartNumberConflict,
+    GameIdentifierInUse,
+    InvalidSongState,
+    RevisionConflict,
+    SongInUse,
+    SongNotFound,
+)
 from server.music.song_schemas import (
     MAXIMUM_PAGE_SIZE,
+    ChartCreate,
+    ChartOut,
     Difficulty,
     RevisionGuard,
     SongCreate,
@@ -83,6 +94,23 @@ def build_song_library_router(
         """Changes metadata when expected_revision is current; returns 409 with current_revision otherwise."""
         return SongOut.model_validate(await service.update(song_id, payload, administrator.id))
 
+    @router.get("/{song_id}/charts", response_model=list[ChartOut])
+    async def list_charts(song_id: str, service: ServiceDependency, _administrator: AdministratorDependency) -> list[ChartOut]:
+        """Lists the song's chart revisions with their note summaries, oldest first."""
+        return [chart_out(chart) for chart in await service.charts(song_id)]
+
+    @router.post("/{song_id}/charts", response_model=ChartOut, status_code=status.HTTP_201_CREATED,
+                 dependencies=[Depends(csrf_guard)])
+    async def create_chart(song_id: str, payload: ChartCreate, service: ServiceDependency,
+                           administrator: AdministratorDependency) -> ChartOut:
+        """Encodes the notes as the next immutable chart revision bound to the song's beatmap id."""
+        notes = [ChartNote(beat_offset=note.beat_offset, lane=note.lane) for note in payload.notes]
+        try:
+            chart = await service.add_chart(song_id, notes, administrator.id)
+        except ValueError as error:
+            raise ChartRejected(str(error)) from error
+        return chart_out(chart)
+
     @router.post("/{song_id}/archive", response_model=SongOut, dependencies=[Depends(csrf_guard)])
     async def archive_song(song_id: str, guard: RevisionGuard, service: ServiceDependency, administrator: AdministratorDependency) -> SongOut:
         """Archives a song, making it read-only and hiding it from future game discovery."""
@@ -100,6 +128,30 @@ def build_song_library_router(
         return Response(status_code=status.HTTP_204_NO_CONTENT)
 
     return router
+
+
+class ChartRejected(Exception):
+    """Raised when authored notes cannot be encoded as a chart; the message names the rule."""
+
+
+def chart_out(chart: ChartRevision) -> ChartOut:
+    """Builds the public chart summary from the stored document."""
+    summary = summarize(chart.document)
+    return ChartOut(
+        id=chart.id,
+        song_id=chart.song_id,
+        revision_number=chart.revision_number,
+        schema_version=chart.schema_version,
+        beatmap_id=summary["beatmap_id"],
+        id_label=summary["id_label"],
+        note_count=summary["note_count"],
+        unsupported_count=summary["unsupported_count"],
+        lanes=summary["lanes"],
+        first_beat=summary["first_beat"],
+        last_beat=summary["last_beat"],
+        raw_sha256=summary["raw_sha256"],
+        created_at=chart.created_at,
+    )
 
 
 def register_song_error_handlers(app: FastAPI) -> None:
@@ -127,3 +179,18 @@ def register_song_error_handlers(app: FastAPI) -> None:
     async def handle_in_use(request: Request, error: SongInUse) -> JSONResponse:
         """Returns 409 when a hard delete would orphan retained data."""
         return JSONResponse(status_code=409, content={"detail": str(error)})
+
+    @app.exception_handler(GameIdentifierInUse)
+    async def handle_identifier_in_use(request: Request, error: GameIdentifierInUse) -> JSONResponse:
+        """Returns 409 when the game song or beatmap identifier belongs to another song."""
+        return JSONResponse(status_code=409, content={"detail": str(error)})
+
+    @app.exception_handler(ChartNumberConflict)
+    async def handle_chart_number(request: Request, error: ChartNumberConflict) -> JSONResponse:
+        """Returns 409 when a concurrent chart write took the revision number; the client may retry."""
+        return JSONResponse(status_code=409, content={"detail": str(error)})
+
+    @app.exception_handler(ChartRejected)
+    async def handle_chart_rejected(request: Request, error: ChartRejected) -> JSONResponse:
+        """Returns 422 with the rule that the notes broke."""
+        return JSONResponse(status_code=422, content={"detail": str(error)})

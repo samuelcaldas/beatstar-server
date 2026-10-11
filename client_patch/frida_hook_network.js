@@ -9,7 +9,7 @@
  */
 
 // Configurações do servidor privado
-const PRIVATE_SERVER_HOST = "10.250.50.165"; // Ou IP local do servidor
+const PRIVATE_SERVER_HOST = "10.0.2.2"; // Android emulator special alias for host machine
 const PRIVATE_SERVER_PORT = 8080;
 const USE_SSL = false;
 const DEFAULT_CINTA = "676d4d53-f0cb-41c6-8c27-4bb3c3c3c905";

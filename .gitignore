@@ -56,3 +56,7 @@ frontend/.next/
 frontend/out/
 frontend/next-env.d.ts
 frontend/tsconfig.tsbuildinfo
+
+# TLS certificates (private keys must not be committed)
+certs/*.key
+certs/*.pem

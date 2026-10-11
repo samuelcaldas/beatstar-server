@@ -97,6 +97,16 @@ class AssetService:
             raise AssetNotFound(asset_id)
         return asset
 
+    async def list_for_song(self, song_id: str) -> list[Asset]:
+        """Returns the song's assets, oldest first.
+
+        Raises:
+            SongNotFound: when no song has the identifier.
+        """
+        await SongLibraryService(self._session).get(song_id)
+        statement = select(Asset).where(Asset.song_id == song_id).order_by(Asset.created_at, Asset.id)
+        return list((await self._session.execute(statement)).scalars().all())
+
     async def _find_in_song(self, song_id: str, storage_key: str) -> Asset | None:
         """Returns the asset already attached to this song with this storage key, if any."""
         statement = select(Asset).where(Asset.song_id == song_id, Asset.storage_key == storage_key)

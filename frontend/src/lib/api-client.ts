@@ -56,12 +56,14 @@ export interface ApiClientOptions {
 }
 
 type QueryValue = string | number | boolean | null | undefined;
-type Method = "GET" | "POST" | "PATCH" | "DELETE";
+type Method = "GET" | "POST" | "PUT" | "PATCH" | "DELETE";
 
 interface RequestPayload {
   query?: Record<string, QueryValue>;
   body?: unknown;
   form?: Record<string, string>;
+  /** Raw bytes sent as-is, for media uploads; the body is never JSON-encoded. */
+  raw?: { body: Blob; contentType: string };
   /** Set only for login: no session or CSRF cookie exists yet, and a 401 means bad credentials. */
   anonymous?: boolean;
 }
@@ -70,6 +72,7 @@ export interface ApiClient {
   get<T = unknown>(path: string, query?: Record<string, QueryValue>): Promise<T>;
   post<T = unknown>(path: string, body?: unknown): Promise<T>;
   postForm<T = unknown>(path: string, fields: Record<string, string>): Promise<T>;
+  putRaw<T = unknown>(path: string, body: Blob, contentType: string): Promise<T>;
   patch<T = unknown>(path: string, body?: unknown): Promise<T>;
   delete<T = unknown>(path: string, body?: unknown): Promise<T>;
 }
@@ -82,6 +85,7 @@ export function createApiClient(options: ApiClientOptions): ApiClient {
     get: (path, query) => request("GET", path, { query }),
     post: (path, body) => request("POST", path, { body }),
     postForm: (path, fields) => request("POST", path, { form: fields, anonymous: true }),
+    putRaw: (path, body, contentType) => request("PUT", path, { raw: { body, contentType } }),
     patch: (path, body) => request("PATCH", path, { body }),
     delete: (path, body) => request("DELETE", path, { body }),
   };
@@ -122,7 +126,11 @@ function requireCsrfToken(options: ApiClientOptions): string {
   return token;
 }
 
-function encodeBody(payload: RequestPayload, headers: Headers): string | undefined {
+function encodeBody(payload: RequestPayload, headers: Headers): BodyInit | undefined {
+  if (payload.raw !== undefined) {
+    headers.set("Content-Type", payload.raw.contentType);
+    return payload.raw.body;
+  }
   if (payload.form !== undefined) {
     headers.set("Content-Type", "application/x-www-form-urlencoded");
     return new URLSearchParams(payload.form).toString();
