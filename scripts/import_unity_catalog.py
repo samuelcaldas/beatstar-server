@@ -18,23 +18,6 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
-from sqlalchemy import select  # noqa: E402
-from sqlalchemy.ext.asyncio import AsyncSession  # noqa: E402
-
-from server.admin.database import create_admin_engine, create_admin_session_maker  # noqa: E402
-from server.assets.client_adapters import SOURCE_ONLY, ClientAdapterFactory  # noqa: E402
-from server.assets.formats import default_registry  # noqa: E402
-from server.assets.ingest import AssetIngestor, AssetLimits  # noqa: E402
-from server.assets.probes import default_media_probe  # noqa: E402
-from server.assets.storage import AssetStorage  # noqa: E402
-from server.music.asset_service import AssetService  # noqa: E402
-from server.music.chart_document import encode_notes  # noqa: E402
-from server.music.example_songs import ExampleSong, artwork_png, build_examples  # noqa: E402
-from server.music.models import Asset, Song  # noqa: E402
-from server.music.song_service import SongLibraryService  # noqa: E402
-from server.music.unity_catalog import UnityCatalogImporter, single_chunk  # noqa: E402
-from server.storage.migrations.runner import upgrade_to_head  # noqa: E402
-
 def parse_arguments() -> argparse.Namespace:
     """Reads the paths; every input is required so that nothing is assumed silently."""
     parser = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
@@ -115,6 +98,29 @@ async def run(arguments: argparse.Namespace) -> dict[str, object]:
 def main() -> None:
     """Runs the import and prints the counts."""
     arguments = parse_arguments()
+    global select, AsyncSession, create_admin_engine, create_admin_session_maker
+    global SOURCE_ONLY, ClientAdapterFactory, default_registry, AssetIngestor, AssetLimits
+    global default_media_probe, AssetStorage, AssetService, encode_notes
+    global ExampleSong, artwork_png, build_examples, Asset, Song
+    global SongLibraryService, UnityCatalogImporter, single_chunk, upgrade_to_head
+
+    from sqlalchemy import select
+    from sqlalchemy.ext.asyncio import AsyncSession
+
+    from server.admin.database import create_admin_engine, create_admin_session_maker
+    from server.assets.client_adapters import SOURCE_ONLY, ClientAdapterFactory
+    from server.assets.formats import default_registry
+    from server.assets.ingest import AssetIngestor, AssetLimits
+    from server.assets.probes import default_media_probe
+    from server.assets.storage import AssetStorage
+    from server.music.asset_service import AssetService
+    from server.music.chart_document import encode_notes
+    from server.music.example_songs import ExampleSong, artwork_png, build_examples
+    from server.music.models import Asset, Song
+    from server.music.song_service import SongLibraryService
+    from server.music.unity_catalog import UnityCatalogImporter, single_chunk
+    from server.storage.migrations.runner import upgrade_to_head
+
     print(asyncio.run(run(arguments)))
 
 

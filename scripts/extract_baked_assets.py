@@ -11,8 +11,6 @@ import shutil
 import struct
 import sys
 import tempfile
-import UnityPy
-
 TARGET_CONFIGS = {"SongConfig", "AssetsConfig", "AudioConfig", "GameConfig", "BeatmapsConfig"}
 MAX_INPUT_BYTES = 512 * 1024 * 1024
 MAX_FILE_BYTES = 256 * 1024 * 1024
@@ -86,6 +84,8 @@ def write_unique(path: Path, payload: bytes) -> None:
 
 def text_assets(path):
     """Yield parsed TextAssets; parser failures propagate and abort publication."""
+    import UnityPy
+
     environment = UnityPy.load(str(path))
     for item in environment.objects:
         if item.type.name == "TextAsset":
@@ -136,6 +136,8 @@ def stage_extraction(source, output, bundles):
 
 def extract_assets(assets_dir: Path, output_dir: Path) -> dict[str, int]:
     """Stage validated extraction and atomically create a new output; never overwrite."""
+    import UnityPy
+
     bundles = validate_source(assets_dir, output_dir)
     UnityPy.config.FALLBACK_UNITY_VERSION = "2022.3.50f1"
     output_dir.parent.mkdir(parents=True, exist_ok=True)

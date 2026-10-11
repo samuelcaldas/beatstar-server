@@ -2,6 +2,10 @@
 
 Ambiente completo de engenharia reversa, pipeline de descompilação automatizada e emulador de servidor privado para o jogo musical **Beatstar** (pacote `com.spaceapegames.beatstar`, codinome Space Ape: **Flamingo**).
 
+O mapa de responsabilidades está em [`docs/architecture.md`](docs/architecture.md).
+O servidor implementa um subconjunto observado do protocolo; simulações de
+tráfego não equivalem a validação no cliente Android.
+
 ---
 
 ## 🚀 Início Rápido
@@ -57,8 +61,14 @@ frida -U -f com.spaceapegames.beatstar -l client_patch/frida_hook_network.js
 ## 🧪 Executar Testes Automatizados
 ```bash
 source .venv/bin/activate
-pytest server/tests/ -v
+python -m compileall -q server scripts
+python -m pytest server/tests/ -v
+(cd frontend && npm run typecheck && npm test)
+docker compose config --quiet
 ```
+
+Para a suíte completa de mídia, use o contexto `docker-dev`, que fornece as
+dependências externas exigidas por `ffprobe` e `ffmpeg`.
 
 ---
 
