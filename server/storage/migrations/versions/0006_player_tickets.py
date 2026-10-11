@@ -1,7 +1,7 @@
 """Create the server-side player ticket table.
 
-Revision ID: 0005_player_tickets
-Revises: 0004_asset_media_metadata
+Revision ID: 0006_player_tickets
+Revises: 0005_game_song_format
 
 Tickets are stored as SHA-256 digests with an expiry in milliseconds, so a database read
 does not reveal usable tickets and expired rows can be rejected without a clock skew.
@@ -10,8 +10,8 @@ does not reveal usable tickets and expired rows can be rejected without a clock 
 import sqlalchemy as sa
 from alembic import op
 
-revision = "0005_player_tickets"
-down_revision = "0004_asset_media_metadata"
+revision = "0006_player_tickets"
+down_revision = "0005_game_song_format"
 branch_labels = None
 depends_on = None
 
